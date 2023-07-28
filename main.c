@@ -61,12 +61,11 @@ int main()
 		double yDrop = ballisticsTest(distance_m);
 		int pixelOffset = calculatePixelOffset(distance_m, yDrop);
 
-		Oled_clear();
 		Oled_displayDistance((int)distance_m);
 		Oled_displayElevation(-angles.theta);
 		Oled_displayCant(-angles.alpha);
 		Oled_displayCenterDot();
-		Oled_displayCalcDot(pixelOffset);
+		int statusOled = Oled_displayCalcDot(pixelOffset); // Use to display warning
 		sleep_ms(100);
 	}
 }

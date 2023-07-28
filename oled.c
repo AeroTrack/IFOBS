@@ -3,7 +3,7 @@
  /-----------------------------------------------------------------------------/
  /	Bowie Gian
  /	Created: 2023-06-30
- /	Modified: 2023-06-30
+ /	Modified: 2023-07-28
  /
  /	This file contains the functions that will drive the OLED screen.
  /	The SPI setup is modified from the accelerometer example.
@@ -12,6 +12,7 @@
 /*--------------------------------------------------------------*/
 /* Include Files												*/
 /*--------------------------------------------------------------*/
+
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "hardware/spi.h"
@@ -20,12 +21,13 @@
 /*--------------------------------------------------------------*/
 /* Definitions													*/
 /*--------------------------------------------------------------*/
+
 #define DEBUG 1
 // Pins
 #define PIN_CS		5 // SPI CS
 #define PIN_SCK		2 // SPI CLK
 #define PIN_MOSI	3 // SPI MOSI
-#define PIN_DC		1 // Data/Command pin
+#define PIN_DC		1 // Data/Command pin (Functions need to change)
 #define PIN_RST		4 // LOW = reset, keep HIGH
 
 // Values for PIN_DC
@@ -35,7 +37,11 @@
 /*--------------------------------------------------------------*/
 /* Global Variables				 								*/
 /*--------------------------------------------------------------*/
+
 static spi_inst_t *spi;
+
+// Pixel arrays for OLED
+// Change to struct with its length for the future ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 static uint8_t number[10][3] = {
 	{0xFE, 0x82, 0xFE},	// 0
 	{0x42, 0xFE, 0x02},	// 1
@@ -57,8 +63,9 @@ static uint8_t symbolPlus[3] = {0x10, 0x38, 0x10};
 static uint8_t symbolNeg[3] = {0x10, 0x10, 0x10};
 
 /*--------------------------------------------------------------*/
-/*  Function Implemetations										*/
+/*  Static Function Implemetations								*/
 /*--------------------------------------------------------------*/
+
 static void setupSPI()
 {
 	spi = spi0; // Link spi0 port
@@ -78,7 +85,7 @@ static void setupSPI()
 	gpio_set_function(PIN_MOSI, GPIO_FUNC_SPI);
 }
 
-// Initialize pins
+// Initializes GPIO pins
 // CS: HIGH, DC: LOW, RST: HIGH
 static void setupGPIO()
 {
@@ -93,32 +100,6 @@ static void setupGPIO()
 	gpio_init(PIN_RST);
 	gpio_set_dir(PIN_RST, GPIO_OUT);
 	gpio_put(PIN_RST, 1);
-}
-
-void Oled_setup()
-{
-	uint8_t data; // Buffer to store output
-	
-	setupSPI();
-	setupGPIO();
-
-	gpio_put(PIN_CS, 0);
-	{
-		// Turn on display
-		data = 0xAF;
-		spi_write_blocking(spi, &data, 1);
-
-		// Remap (Flip Horizontally)
-		data = 0xA1;
-		spi_write_blocking(spi, &data, 1);
-
-		// Set Horizonal Addr Mode
-		data = 0x20;
-		spi_write_blocking(spi, &data, 1);
-		data = 0x00;
-		spi_write_blocking(spi, &data, 1);
-	}
-	gpio_put(PIN_CS, 1);
 }
 
 static void setColumnRange(uint8_t start, uint8_t end)
@@ -168,6 +149,52 @@ static void setPageRange(uint8_t start, uint8_t end)
 	gpio_put(PIN_CS, 1);
 }
 
+// Sends the array of pixels to the OLED
+// ASSUMES: PIN_DC = OLED_DC_DATA, PIN_CS = 0
+static void display(uint8_t *columnArray, int width)
+{
+	for (int i = 0; i < width; i++) {
+		spi_write_blocking(spi, &columnArray[i], 1);
+	}
+}
+
+/*--------------------------------------------------------------*/
+/*  Function Implemetations										*/
+/*--------------------------------------------------------------*/
+
+void Oled_setup()
+{
+	uint8_t data; // Buffer to store output
+	
+	setupSPI();
+	setupGPIO();
+
+	gpio_put(PIN_DC, OLED_DC_COMD);
+	gpio_put(PIN_CS, 0);
+	{
+		// Remap (Flip Horizontally)
+		data = 0xA1;
+		spi_write_blocking(spi, &data, 1);
+
+		// Set Horizonal Addr Mode
+		data = 0x20;
+		spi_write_blocking(spi, &data, 1);
+		data = 0x00;
+		spi_write_blocking(spi, &data, 1);
+	}
+	gpio_put(PIN_CS, 1);
+
+	Oled_clear();
+
+	gpio_put(PIN_DC, OLED_DC_COMD);
+	gpio_put(PIN_CS, 0);
+	{
+		// Turn on display
+		data = 0xAF;
+		spi_write_blocking(spi, &data, 1);
+	}
+}
+
 void Oled_clear()
 {
 	setColumnRange(0x00, 0x7F);
@@ -176,31 +203,24 @@ void Oled_clear()
 	gpio_put(PIN_DC, OLED_DC_DATA);
 	gpio_put(PIN_CS, 0);
 	{
-		uint8_t data = 0;
+		uint8_t blank = 0;
 		for (int i = 0; i < 8*128; i++) {
-			spi_write_blocking(spi, &data, 1);
+			spi_write_blocking(spi, &blank, 1);
 		}
 	}
 	gpio_put(PIN_CS, 1);
 }
 
-static void display(uint8_t *columnArray, int width)
-{
-	for (int i = 0; i < width; i++) {
-		spi_write_blocking(spi, &columnArray[i], 1);
-	}
-}
-
 void Oled_displayDistance(int distance)
 {
-	setColumnRange(0x38, 0x7F);
-	setPageRange(0x07, 0x07);
-
 	int digit[3] = {0};
 
 	digit[0] = distance % 10;
 	digit[1] = distance % 100 / 10;
 	digit[2] = distance % 1000 / 100;
+
+	setColumnRange(0x38, 0x7F);
+	setPageRange(0x07, 0x07);
 
 	gpio_put(PIN_DC, OLED_DC_DATA);
 	gpio_put(PIN_CS, 0);
@@ -219,9 +239,6 @@ void Oled_displayElevation(double angle)
 {
 	bool negative = false;
 
-	setColumnRange(0x60, 0x7F);
-	setPageRange(0x04, 0x04);
-
 	if (angle < 0) {
 		negative = true;
 		angle *= -1;
@@ -233,6 +250,9 @@ void Oled_displayElevation(double angle)
 	digit[0] = angleInt % 10;
 	digit[1] = angleInt % 100 / 10;
 	digit[2] = angleInt % 1000 / 100;
+
+	setColumnRange(0x60, 0x7F);
+	setPageRange(0x04, 0x04);
 
 	gpio_put(PIN_DC, OLED_DC_DATA);
 	gpio_put(PIN_CS, 0);
@@ -260,20 +280,20 @@ void Oled_displayCant(double angle)
 {
 	bool negative = false;
 
-	setColumnRange(0x36, 0x7F);
-	setPageRange(0x00, 0x00);
-
 	if (angle < 0) {
 		negative = true;
 		angle *= -1;
 	}
-	
+
 	int angleInt = (int)angle;
 	int digit[3] = {0};
 
 	digit[0] = angleInt % 10;
 	digit[1] = angleInt % 100 / 10;
 	digit[2] = angleInt % 1000 / 100;
+
+	setColumnRange(0x36, 0x7F);
+	setPageRange(0x00, 0x00);
 
 	gpio_put(PIN_DC, OLED_DC_DATA);
 	gpio_put(PIN_CS, 0);
@@ -311,11 +331,11 @@ void Oled_displayCenterDot()
 	gpio_put(PIN_CS, 1);
 }
 
-void Oled_displayCalcDot(int y)
+int Oled_displayCalcDot(int y)
 {
 	if (y <= 0 || y > 24) {
 		// Out of range
-		return;
+		return OLED_OFF_SCREEN;
 	}
 
 	int page = 3 - (y - 1) / 8;
@@ -328,6 +348,24 @@ void Oled_displayCalcDot(int y)
 	gpio_put(PIN_CS, 0);
 	{
 		display(&pixel, 1);
+	}
+	gpio_put(PIN_CS, 1);
+
+	return OLED_SUCCESS;
+}
+
+void Oled_clearCalcDot()
+{
+	setColumnRange(0x40, 0x40);
+	setPageRange(0x01, 0x03);
+
+	gpio_put(PIN_DC, OLED_DC_DATA);
+	gpio_put(PIN_CS, 0);
+	{
+		uint8_t blank = 0;
+		for (int i = 0; i < 3; i++) {
+			spi_write_blocking(spi, &blank, 1);
+		}
 	}
 	gpio_put(PIN_CS, 1);
 }
