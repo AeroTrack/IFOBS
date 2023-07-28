@@ -55,6 +55,7 @@ static uint8_t number[10][3] = {
 	{0xF0, 0x90, 0xFE}	// 9
 };
 
+static uint8_t letterE[3] = {0xFE, 0x92, 0x92};
 static uint8_t letterM[5] = {0x1E, 0x10, 0x0E, 0x10, 0x0E};
 static uint8_t letterL[3] = {0xFE, 0x02, 0x02};
 static uint8_t letterR[3] = {0xFE, 0xB0, 0xEE};
@@ -213,6 +214,10 @@ void Oled_clear()
 
 void Oled_displayDistance(int distance)
 {
+	if (distance < 0) {
+		printf("DEBUG: Oled_displayDistance is negative\r\n");
+	}
+	
 	int digit[3] = {0};
 
 	digit[0] = distance % 10;
@@ -228,6 +233,50 @@ void Oled_displayDistance(int distance)
 		uint8_t space = 0;
 		for (int i = 2; i >= 0; i--) {
 			display(number[digit[i]], 3);
+			spi_write_blocking(spi, &space, 1);
+		}
+		display(letterM, 5);
+	}
+	gpio_put(PIN_CS, 1);
+}
+
+void Oled_displayLidarErr()
+{
+	setColumnRange(0x38, 0x7F);
+	setPageRange(0x07, 0x07);
+
+	gpio_put(PIN_DC, OLED_DC_DATA);
+	gpio_put(PIN_CS, 0);
+	{
+		uint8_t space = 0;
+
+		display(letterE, 3);
+		spi_write_blocking(spi, &space, 1);
+
+		for (int i = 0; i < 2; i++) {
+			display(letterR, 3);
+			spi_write_blocking(spi, &space, 1);
+		}
+
+		// Erase the 'm'
+		for (int i = 0; i < 5; i++) {
+			spi_write_blocking(spi, &space, 1);
+		}
+	}
+	gpio_put(PIN_CS, 1);
+}
+
+void Oled_displayDistanceMax()
+{
+	setColumnRange(0x38, 0x7F);
+	setPageRange(0x07, 0x07);
+
+	gpio_put(PIN_DC, OLED_DC_DATA);
+	gpio_put(PIN_CS, 0);
+	{
+		uint8_t space = 0;
+		for (int i = 2; i >= 0; i--) {
+			display(symbolDeg, 3);
 			spi_write_blocking(spi, &space, 1);
 		}
 		display(letterM, 5);

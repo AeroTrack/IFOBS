@@ -13,6 +13,7 @@
 /*--------------------------------------------------------------*/
 /* Definitions													*/
 /*--------------------------------------------------------------*/
+
 #define OLED_SUCCESS 0
 #define OLED_OFF_SCREEN -1
 
@@ -27,6 +28,12 @@ void Oled_clear();
 
 // Displays the distance at the top
 void Oled_displayDistance(int distance);
+
+// Displays ERR at the top
+void Oled_displayLidarErr();
+
+// Displays ---m at the top
+void Oled_displayDistanceMax();
 
 // Displays the angle on the right
 void Oled_displayElevation(double angle);

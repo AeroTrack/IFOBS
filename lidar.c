@@ -25,7 +25,7 @@ static bool ret;
 //Dist_L Dist_H Strength_L Strength_H Temp_L Temp_H Checksum
 typedef struct {
 	unsigned short Header;
-	unsigned short Dist;
+	short Dist;
 	unsigned short Strength;
 } structLidar;
 
@@ -81,7 +81,7 @@ int isLidar(uart_inst_t * uart, union unionLidar * lidar)
 }
 //****************************Function to read serial data***********
 
-void Lidar_Setup()
+void Lidar_setup()
 {
 	//******************************************************************
 	// add some binary info
@@ -128,17 +128,20 @@ void Lidar_Setup()
 	printf("Ready to read data\n");
 }
 
-void Lidar_Poll()
+void Lidar_poll()
 {
 	// gpio_put(LED_PIN, 0);
 	// sleep_ms(200);
 	// gpio_put(LED_PIN, 1);
 	if (isLidar(UART_ID1,&Lidar)) {
 		printf("Dist:%u \n", Lidar.lidar.Dist);
+	} else {
+		printf("LIDAR disconnected\r\n");
+		Lidar.lidar.Dist = LIDAR_DC;
 	}
 }
 
-unsigned short Lidar_GetDistanceCm()
+short Lidar_getDistanceCm()
 {
 	return Lidar.lidar.Dist;
 }

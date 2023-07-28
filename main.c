@@ -46,7 +46,7 @@ int main()
 
 	Oled_setup();
 	Accel_setup();
-	Lidar_Setup();
+	Lidar_setup();
 
 	while (true) {
 		Angle angles;
@@ -54,18 +54,27 @@ int main()
 		Accel_poll();
 		angles = Accel_getAngle();
 
-		Lidar_Poll();
-		unsigned short distance_cm = Lidar_GetDistanceCm();
+		Lidar_poll();
+		short distance_cm = Lidar_getDistanceCm();
 		double distance_m = (double)distance_cm / 100.0;
 
 		double yDrop = ballisticsTest(distance_m);
-		int pixelOffset = calculatePixelOffset(distance_m, yDrop);
+		int pixelOffset = calculatePixelOffset(distance_m, -yDrop);
 
-		Oled_displayDistance((int)distance_m);
+		printf("%d %d\r\n", distance_cm, pixelOffset);
+		if (distance_cm == LIDAR_DC) {
+			Oled_displayLidarErr();
+		} else if (distance_cm == LIDAR_MAX_CM) {
+			Oled_displayDistanceMax();
+		} else {
+			Oled_displayDistance((int)distance_m);
+		}
+		
 		Oled_displayElevation(-angles.theta);
 		Oled_displayCant(-angles.alpha);
 		Oled_displayCenterDot();
+		Oled_clearCalcDot();
 		int statusOled = Oled_displayCalcDot(pixelOffset); // Use to display warning
-		sleep_ms(100);
+		sleep_ms(50);
 	}
 }
