@@ -190,6 +190,12 @@ void Oled_setup()
 	gpio_put(PIN_DC, OLED_DC_COMD);
 	gpio_put(PIN_CS, 0);
 	{
+		// Max Brightness
+		data = 0x81;
+		spi_write_blocking(spi, &data, 1);
+		data = 0xFF;
+		spi_write_blocking(spi, &data, 1);
+
 		// Turn on display
 		data = 0xAF;
 		spi_write_blocking(spi, &data, 1);

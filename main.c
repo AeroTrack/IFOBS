@@ -75,6 +75,6 @@ int main()
 		Oled_displayCenterDot();
 		Oled_clearCalcDot();
 		int statusOled = Oled_displayCalcDot(pixelOffset); // Use to display warning
-		sleep_ms(50);
+		sleep_ms(100);
 	}
 }
