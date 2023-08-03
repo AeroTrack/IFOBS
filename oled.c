@@ -34,6 +34,10 @@
 #define OLED_DC_COMD 0 // command
 #define OLED_DC_DATA 1 // data
 
+#define DOT_CENTER_COL 0x40
+#define DIST_DISP_COL (DOT_CENTER_COL - 0x08)
+#define DIST_DISP_PAGE 0x06
+
 /*--------------------------------------------------------------*/
 /* Global Variables				 								*/
 /*--------------------------------------------------------------*/
@@ -230,8 +234,8 @@ void Oled_displayDistance(int distance)
 	digit[1] = distance % 100 / 10;
 	digit[2] = distance % 1000 / 100;
 
-	setColumnRange(0x38, 0x7F);
-	setPageRange(0x07, 0x07);
+	setColumnRange(DIST_DISP_COL, 0x7F);
+	setPageRange(DIST_DISP_PAGE, DIST_DISP_PAGE);
 
 	gpio_put(PIN_DC, OLED_DC_DATA);
 	gpio_put(PIN_CS, 0);
@@ -248,8 +252,8 @@ void Oled_displayDistance(int distance)
 
 void Oled_displayLidarErr()
 {
-	setColumnRange(0x38, 0x7F);
-	setPageRange(0x07, 0x07);
+	setColumnRange(DIST_DISP_COL, 0x7F);
+	setPageRange(DIST_DISP_PAGE, DIST_DISP_PAGE);
 
 	gpio_put(PIN_DC, OLED_DC_DATA);
 	gpio_put(PIN_CS, 0);
@@ -274,8 +278,8 @@ void Oled_displayLidarErr()
 
 void Oled_displayDistanceMax()
 {
-	setColumnRange(0x38, 0x7F);
-	setPageRange(0x07, 0x07);
+	setColumnRange(DIST_DISP_COL, 0x7F);
+	setPageRange(DIST_DISP_PAGE, DIST_DISP_PAGE);
 
 	gpio_put(PIN_DC, OLED_DC_DATA);
 	gpio_put(PIN_CS, 0);
@@ -306,8 +310,8 @@ void Oled_displayElevation(double angle)
 	digit[1] = angleInt % 100 / 10;
 	digit[2] = angleInt % 1000 / 100;
 
-	setColumnRange(0x60, 0x7F);
-	setPageRange(0x04, 0x04);
+	setColumnRange(0x50, 0x7F);
+	setPageRange(0x02, 0x02);
 
 	gpio_put(PIN_DC, OLED_DC_DATA);
 	gpio_put(PIN_CS, 0);
@@ -374,7 +378,7 @@ void Oled_displayCant(double angle)
 
 void Oled_displayCenterDot()
 {
-	setColumnRange(0x40, 0x40);
+	setColumnRange(DOT_CENTER_COL, DOT_CENTER_COL);
 	setPageRange(0x04, 0x04);
 
 	gpio_put(PIN_DC, OLED_DC_DATA);
@@ -396,7 +400,7 @@ int Oled_displayCalcDot(int y)
 	int page = 3 - (y - 1) / 8;
 	uint8_t pixel = 0x80 >> ((y - 1) % 8);
 
-	setColumnRange(0x40, 0x40);
+	setColumnRange(DOT_CENTER_COL, DOT_CENTER_COL);
 	setPageRange(page, page);
 
 	gpio_put(PIN_DC, OLED_DC_DATA);
@@ -411,7 +415,7 @@ int Oled_displayCalcDot(int y)
 
 void Oled_clearCalcDot()
 {
-	setColumnRange(0x40, 0x40);
+	setColumnRange(DOT_CENTER_COL, DOT_CENTER_COL);
 	setPageRange(0x01, 0x03);
 
 	gpio_put(PIN_DC, OLED_DC_DATA);
