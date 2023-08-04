@@ -286,7 +286,7 @@ void Oled_displayDistanceMax()
 	{
 		uint8_t space = 0;
 		for (int i = 2; i >= 0; i--) {
-			display(symbolDeg, 3);
+			display(symbolNeg, 3);
 			spi_write_blocking(spi, &space, 1);
 		}
 		display(letterM, 5);
