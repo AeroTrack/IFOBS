@@ -26,14 +26,10 @@ void Oled_setup();
 // Turns off all pixels
 void Oled_clear();
 
-// Displays the distance at the top
-void Oled_displayDistance(int distance);
-
-// Displays ERR at the top
-void Oled_displayLidarErr();
-
-// Displays ---m at the top
-void Oled_displayDistanceMax();
+// Displays the distance in meters at the top
+// If distance_cm is -1, displays ERR at the top
+// If distance_cm is 18000, displays ---m at the top
+void Oled_displayDistance(int distance_cm);
 
 // Displays the angle on the right
 void Oled_displayElevation(double angle);

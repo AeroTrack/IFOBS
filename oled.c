@@ -17,6 +17,7 @@
 #include "pico/stdlib.h"
 #include "hardware/spi.h"
 #include "oled.h"
+#include "lidar.h"
 
 /*--------------------------------------------------------------*/
 /* Definitions													*/
@@ -222,35 +223,7 @@ void Oled_clear()
 	gpio_put(PIN_CS, 1);
 }
 
-void Oled_displayDistance(int distance)
-{
-	if (distance < 0) {
-		printf("DEBUG: Oled_displayDistance is negative\r\n");
-	}
-	
-	int digit[3] = {0};
-
-	digit[0] = distance % 10;
-	digit[1] = distance % 100 / 10;
-	digit[2] = distance % 1000 / 100;
-
-	setColumnRange(DIST_DISP_COL, 0x7F);
-	setPageRange(DIST_DISP_PAGE, DIST_DISP_PAGE);
-
-	gpio_put(PIN_DC, OLED_DC_DATA);
-	gpio_put(PIN_CS, 0);
-	{
-		uint8_t space = 0;
-		for (int i = 2; i >= 0; i--) {
-			display(number[digit[i]], 3);
-			spi_write_blocking(spi, &space, 1);
-		}
-		display(letterM, 5);
-	}
-	gpio_put(PIN_CS, 1);
-}
-
-void Oled_displayLidarErr()
+void Oled_displayDistance(int distance_cm)
 {
 	setColumnRange(DIST_DISP_COL, 0x7F);
 	setPageRange(DIST_DISP_PAGE, DIST_DISP_PAGE);
@@ -259,37 +232,39 @@ void Oled_displayLidarErr()
 	gpio_put(PIN_CS, 0);
 	{
 		uint8_t space = 0;
-
-		display(letterE, 3);
-		spi_write_blocking(spi, &space, 1);
-
-		for (int i = 0; i < 2; i++) {
-			display(letterR, 3);
+		if (distance_cm <= LIDAR_DC) {				// If LIDAR disconnected
+			display(letterE, 3);
 			spi_write_blocking(spi, &space, 1);
-		}
 
-		// Erase the 'm'
-		for (int i = 0; i < 5; i++) {
-			spi_write_blocking(spi, &space, 1);
-		}
-	}
-	gpio_put(PIN_CS, 1);
-}
+			for (int i = 0; i < 2; i++) {
+				display(letterR, 3);
+				spi_write_blocking(spi, &space, 1);
+			}
 
-void Oled_displayDistanceMax()
-{
-	setColumnRange(DIST_DISP_COL, 0x7F);
-	setPageRange(DIST_DISP_PAGE, DIST_DISP_PAGE);
+			// Erase the 'm'
+			for (int i = 0; i < 5; i++) {
+				spi_write_blocking(spi, &space, 1);
+			}
+		} else if (distance_cm == LIDAR_MAX_CM) {	// If max distance returned
+			for (int i = 2; i >= 0; i--) {
+				display(symbolNeg, 3);
+				spi_write_blocking(spi, &space, 1);
+			}
+			display(letterM, 5);
+		} else {									// Display distance
+			int distance_m = distance_cm / 100;
+			int digit[3] = {0};
 
-	gpio_put(PIN_DC, OLED_DC_DATA);
-	gpio_put(PIN_CS, 0);
-	{
-		uint8_t space = 0;
-		for (int i = 2; i >= 0; i--) {
-			display(symbolNeg, 3);
-			spi_write_blocking(spi, &space, 1);
+			digit[0] = distance_m % 10;
+			digit[1] = distance_m % 100 / 10;
+			digit[2] = distance_m % 1000 / 100;
+
+			for (int i = 2; i >= 0; i--) {
+				display(number[digit[i]], 3);
+				spi_write_blocking(spi, &space, 1);
+			}
+			display(letterM, 5);
 		}
-		display(letterM, 5);
 	}
 	gpio_put(PIN_CS, 1);
 }

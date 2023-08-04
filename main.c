@@ -62,14 +62,7 @@ int main()
 		int pixelOffset = calculatePixelOffset(distance_m, -yDrop);
 
 		printf("%d %d\r\n", distance_cm, pixelOffset);
-		if (distance_cm == LIDAR_DC) {
-			Oled_displayLidarErr();
-		} else if (distance_cm == LIDAR_MAX_CM) {
-			Oled_displayDistanceMax();
-		} else {
-			Oled_displayDistance((int)distance_m);
-		}
-		
+		Oled_displayDistance(distance_cm);
 		Oled_displayElevation(-angles.theta);
 		Oled_displayCant(-angles.alpha);
 		Oled_displayCenterDot();
