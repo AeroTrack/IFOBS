@@ -138,7 +138,7 @@ void Ballistics_calculatePixelOffset(double distance_m, double elev_deg,
 	polarTocartesian(drop_m, (cant_deg + 90.0), &zOffset_m, &yOffset_m);
 
 	double xTotal = distance_m + xEyeToOptic;
-	double yTotal = yOffset_m + yHeightOverBore;
+	double yTotal = yOffset_m - yHeightOverBore;
 	double zTotal = zOffset_m;
 
 	double yScreen = yTotal / xTotal * xEyeToOptic;
