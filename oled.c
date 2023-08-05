@@ -396,10 +396,17 @@ int Oled_displayCalcDot(int x, int y)
 	
 	uint8_t pixel = 0;
 
+	if (x < -16 || x >= 16) {
+		// Out of range
+		return OLED_OFF_SCREEN;
+	}
+
 	if (y < -24 || y >= 16) {
 		// Out of range
 		return OLED_OFF_SCREEN;
 	}
+
+	curCalcDotCol = DOT_CENTER_COL + x;
 
 	curCalcDotPage = (y + 32) / 8;
 	pixel = 0x01 << ((y + 32) % 8);

@@ -60,20 +60,22 @@ int main()
 		angles = Accel_getAngle();
 
 		Lidar_poll();
-		// short distance_cm = Lidar_getDistanceCm();
-		short distance_cm = 17900;
+		short distance_cm = Lidar_getDistanceCm();
+		// short distance_cm = 17900;
 		double distance_m = (double)distance_cm / 100.0;
 
 		int xOffset = 0;
 		int yOffset = 0;
-		Ballistics_calculatePixelOffset(distance_m, angles.theta,
-				angles.alpha, &xOffset, &yOffset);
+		if (distance_cm != LIDAR_DC && distance_cm != LIDAR_MAX_CM) {
+			Ballistics_calculatePixelOffset(distance_m, angles.theta,
+					angles.alpha, &xOffset, &yOffset);
+		}
 
 		printf("%d %d %d\r\n", distance_cm, xOffset, yOffset);
 		Oled_displayDistance(distance_cm);
 		Oled_displayElevation(angles.theta);
 		Oled_displayCant(angles.alpha);
-		int statusOled = Oled_displayCalcDot(0, yOffset); // Use to display warning
+		int statusOled = Oled_displayCalcDot(xOffset, yOffset); // Use to display warning
 		sleep_ms(100);
 	}
 }
