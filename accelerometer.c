@@ -90,9 +90,9 @@ Angle cal_Angle(double x, double y, double z) {
     sum_r =  x*x + y*y + z*z;
     result_angle.r = sqrt(sum_r);
         
-    result_angle.theta = atan2(x, sqrt(z * z + y * y))*180/M_PI;
+    result_angle.theta = atan2(-x, sqrt(z * z + y * y))*180/M_PI;
 
-    result_angle.alpha = atan2(y,z) *180/M_PI; 
+    result_angle.alpha = atan2(-y,z) *180/M_PI; 
 
     return result_angle; 
 }
