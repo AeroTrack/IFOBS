@@ -99,6 +99,7 @@ int main()
 			Oled_clearCalcDotErr();
 		}
 		
+		printf("\r\n\n");
 		sleep_ms(100);
 	}
 }
