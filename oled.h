@@ -38,7 +38,7 @@ void Oled_displayElevation(double angle);
 void Oled_displayCant(double angle);
 
 // Displays a dot in the center
-void Oled_displayCenterDot();
+void Oled_displayCenter();
 
 // Display a dot offset down from the center dot
 // Returns 0 on success, -1 on failure (off screen)

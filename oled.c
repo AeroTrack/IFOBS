@@ -14,6 +14,7 @@
 /*--------------------------------------------------------------*/
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "pico/stdlib.h"
 #include "hardware/spi.h"
 #include "oled.h"
@@ -24,6 +25,10 @@
 /*--------------------------------------------------------------*/
 
 #define DEBUG 1
+
+// 0 = Dot, 1 = Cross
+#define DOT_OR_CROSS 1
+
 // Pins
 #define PIN_CS		5 // SPI CS
 #define PIN_SCK		2 // SPI CLK
@@ -46,6 +51,11 @@
 
 uint8_t curCalcDotCol = DOT_CENTER_COL;
 uint8_t curCalcDotPage = 0x03;
+
+#if DOT_OR_CROSS == 1
+int prevXOffset = 0;
+int prevYOffset = 0;
+#endif
 
 static spi_inst_t *spi;
 
@@ -372,47 +382,95 @@ void Oled_displayCant(double angle)
 	gpio_put(PIN_CS, 1);
 }
 
-void Oled_displayCenterDot()
+void Oled_displayCenter()
 {
+#if DOT_OR_CROSS == 0
 	setColumnRange(DOT_CENTER_COL, DOT_CENTER_COL);
 	setPageRange(DOT_CENTER_PAGE, DOT_CENTER_PAGE);
 
 	gpio_put(PIN_DC, OLED_DC_DATA);
-	uint8_t dot = 0x01;
 	gpio_put(PIN_CS, 0);
 	{
-		display(&dot, 1);
+		uint8_t dot = 0x01;
+		spi_write_blocking(spi, &dot, 1);
 	}
 	gpio_put(PIN_CS, 1);
+#elif DOT_OR_CROSS == 1
+	setColumnRange(DOT_CENTER_COL - 6, DOT_CENTER_COL + 6);
+	setPageRange(DOT_CENTER_PAGE, DOT_CENTER_PAGE);
+	
+	gpio_put(PIN_DC, OLED_DC_DATA);
+	gpio_put(PIN_CS, 0);
+	{
+		uint8_t sides = 0x01;
+		uint8_t center = 0x78;
+		uint8_t blank = 0x00;
+
+		for (int i = 0; i < 13; i++) {
+			if (i <= 3 || i >= 9) {
+				spi_write_blocking(spi, &sides, 1);
+			} else if (i == 6) {
+				spi_write_blocking(spi, &center, 1);
+			} else {
+				spi_write_blocking(spi, &blank, 1);
+			}
+		}
+	}
+	gpio_put(PIN_CS, 1);
+
+	setColumnRange(DOT_CENTER_COL, DOT_CENTER_COL);
+	setPageRange(DOT_CENTER_PAGE - 1, DOT_CENTER_PAGE - 1);
+
+	gpio_put(PIN_DC, OLED_DC_DATA);
+	gpio_put(PIN_CS, 0);
+	{
+		uint8_t bottom = 0x3C;
+		spi_write_blocking(spi, &bottom, 1);
+	}
+	gpio_put(PIN_CS, 1);
+#endif
 }
 
-int Oled_displayCalcDot(int x, int y)
+int Oled_displayCalcDot(int xOffset, int yOffset)
 {
+#if DOT_OR_CROSS == 0
 	// If current dot is on the center dot byte, redraw the center dot to clear
 	if (curCalcDotCol == DOT_CENTER_COL && curCalcDotPage == DOT_CENTER_PAGE) {
-		Oled_displayCenterDot();
+		Oled_displayCenter();
 	} else {
 		clearCalcDot();
 	}
-	
+#elif DOT_OR_CROSS == 1
+	clearCalcDot();
+#endif
 	uint8_t pixel = 0;
 
-	if (x < -16 || x >= 16) {
+	if (xOffset < -16 || xOffset >= 16) {
 		// Out of range
+		curCalcDotCol = DOT_CENTER_COL;
+		curCalcDotPage == DOT_CENTER_PAGE;
+#if DOT_OR_CROSS == 1
+		Oled_displayCenter();
+#endif
 		return OLED_OFF_SCREEN;
 	}
 
-	if (y < -24 || y >= 16) {
+	if (yOffset < -24 || yOffset >= 16) {
 		// Out of range
+		curCalcDotCol = DOT_CENTER_COL;
+		curCalcDotPage == DOT_CENTER_PAGE;
+#if DOT_OR_CROSS == 1
+		Oled_displayCenter();
+#endif
 		return OLED_OFF_SCREEN;
 	}
 
-	curCalcDotCol = DOT_CENTER_COL + x;
+	curCalcDotCol = DOT_CENTER_COL + xOffset;
 
-	curCalcDotPage = (y + 32) / 8;
-	pixel = 0x01 << ((y + 32) % 8);
+	curCalcDotPage = (yOffset + 32) / 8;
+	pixel = 0x01 << ((yOffset + 32) % 8);
 	printf("Page:%d Pixel%02X \r\n", curCalcDotPage, pixel);
-
+#if DOT_OR_CROSS == 0
 	// If pixel is on the center dot byte, add the center dot too
 	if (curCalcDotCol == DOT_CENTER_COL && curCalcDotPage == DOT_CENTER_PAGE) {
 		pixel |= 0x01;
@@ -424,10 +482,72 @@ int Oled_displayCalcDot(int x, int y)
 	gpio_put(PIN_DC, OLED_DC_DATA);
 	gpio_put(PIN_CS, 0);
 	{
-		display(&pixel, 1);
+		spi_write_blocking(spi, &pixel, 1);
+	}
+	gpio_put(PIN_CS, 1);
+#elif DOT_OR_CROSS == 1
+	// If inside of crosshair
+	if (abs(xOffset) <= 9 && abs(yOffset) <= 9) {
+		uint8_t blank = 0;
+
+		// Draw part of crosshair
+		setColumnRange(DOT_CENTER_COL - 6, DOT_CENTER_COL + 6);
+		setPageRange(DOT_CENTER_PAGE, DOT_CENTER_PAGE);
+
+		gpio_put(PIN_DC, OLED_DC_DATA);
+		gpio_put(PIN_CS, 0);
+		{
+			uint8_t sides = 0x01;
+			uint8_t center = 0x78;
+			uint8_t blank = 0x00;
+
+			for (int i = 0; i < 13; i++) {
+				if (i <= 3 && xOffset >= 0) {
+					spi_write_blocking(spi, &sides, 1);
+				} else if (i >= 9 && xOffset <= 0) {
+					spi_write_blocking(spi, &sides, 1);
+				} else if (i == 6 && yOffset <= 0) {
+					spi_write_blocking(spi, &center, 1);
+				} else {
+					spi_write_blocking(spi, &blank, 1);
+				}
+			}
+		}
+		gpio_put(PIN_CS, 1);
+
+		if (yOffset >= 0) {
+			setColumnRange(DOT_CENTER_COL, DOT_CENTER_COL);
+			setPageRange(DOT_CENTER_PAGE - 1, DOT_CENTER_PAGE - 1);
+
+			gpio_put(PIN_DC, OLED_DC_DATA);
+			gpio_put(PIN_CS, 0);
+			{
+				uint8_t bottom = 0x3C;
+				spi_write_blocking(spi, &bottom, 1);
+			}
+			gpio_put(PIN_CS, 1);
+		}
+	} else {
+		Oled_displayCenter();
+	}
+
+	// If pixel is on the center dot byte, add the center dot too
+	if (xOffset == 0 && yOffset == 0) {
+		pixel |= 0x78;
+	}
+
+	setColumnRange(curCalcDotCol, curCalcDotCol);
+	setPageRange(curCalcDotPage, curCalcDotPage);
+
+	gpio_put(PIN_DC, OLED_DC_DATA);
+	gpio_put(PIN_CS, 0);
+	{
+		spi_write_blocking(spi, &pixel, 1);
 	}
 	gpio_put(PIN_CS, 1);
 
+	return OLED_SUCCESS;
+#endif
 	return OLED_SUCCESS;
 }
 
@@ -454,7 +574,7 @@ void Oled_clearLock()
 	{
 		u_int8_t blank = 0x00;
 		for (int i = 0; i < 5; i++) {
-			display(&blank, 1);
+			spi_write_blocking(spi, &blank, 1);
 		}
 	}
 	gpio_put(PIN_CS, 1);
@@ -469,7 +589,7 @@ void Oled_displayCalcDotErr()
 	gpio_put(PIN_CS, 0);
 	{
 		u_int8_t error = 0xE4;
-		display(&error, 1);
+		spi_write_blocking(spi, &error, 1);
 	}
 	gpio_put(PIN_CS, 1);
 }
@@ -483,7 +603,7 @@ void Oled_clearCalcDotErr()
 	gpio_put(PIN_CS, 0);
 	{
 		u_int8_t blank = 0x00;
-		display(&blank, 1);
+		spi_write_blocking(spi, &blank, 1);
 	}
 	gpio_put(PIN_CS, 1);
 }

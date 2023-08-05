@@ -58,7 +58,7 @@ int main()
 	Accel_setup();
 	Lidar_setup();
 
-	Oled_displayCenterDot();
+	Oled_displayCenter();
 
 	while (true) {
 		Angle angles;
@@ -77,7 +77,7 @@ int main()
 
 			Lidar_distancePoll();
 			distance_cm = Lidar_getDistanceCm();
-			// short distance_cm = 17900;
+			// distance_cm = 17900;
 			distance_m = (double)distance_cm / 100.0;
 		}
 
