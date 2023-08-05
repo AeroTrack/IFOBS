@@ -51,6 +51,8 @@ int main()
 	Accel_setup();
 	Lidar_setup();
 
+	Oled_displayCenterDot();
+
 	while (true) {
 		Angle angles;
 
@@ -71,9 +73,7 @@ int main()
 		Oled_displayDistance(distance_cm);
 		Oled_displayElevation(angles.theta);
 		Oled_displayCant(angles.alpha);
-		Oled_displayCenterDot();
-		Oled_clearCalcDot();
-		int statusOled = Oled_displayCalcDot(-yOffset); // Use to display warning
+		int statusOled = Oled_displayCalcDot(0, yOffset); // Use to display warning
 		sleep_ms(100);
 	}
 }

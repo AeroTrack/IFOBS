@@ -42,11 +42,6 @@ void Oled_displayCenterDot();
 
 // Display a dot offset down from the center dot
 // Returns 0 on success, -1 on failure (off screen)
-int Oled_displayCalcDot(int y);
-
-// Clears the calculated dot, if there is one.
-// Currently clears all possible locations of this dot.
-// Module should keep track of this dot and only clear that byte.
-void Oled_clearCalcDot();
+int Oled_displayCalcDot(int x, int y);
 
 #endif

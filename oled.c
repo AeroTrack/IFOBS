@@ -36,12 +36,16 @@
 #define OLED_DC_DATA 1 // data
 
 #define DOT_CENTER_COL 0x40
+#define DOT_CENTER_PAGE 0x04
 #define DIST_DISP_COL (DOT_CENTER_COL - 0x08)
 #define DIST_DISP_PAGE 0x06
 
 /*--------------------------------------------------------------*/
 /* Global Variables				 								*/
 /*--------------------------------------------------------------*/
+
+uint8_t curCalcDotCol = DOT_CENTER_COL;
+uint8_t curCalcDotPage = 0x03;
 
 static spi_inst_t *spi;
 
@@ -162,6 +166,22 @@ static void display(uint8_t *columnArray, int width)
 	for (int i = 0; i < width; i++) {
 		spi_write_blocking(spi, &columnArray[i], 1);
 	}
+}
+
+// Clears the calculated dot.
+// Module keeps track of this dot and only clears that byte.
+static void clearCalcDot()
+{
+	setColumnRange(curCalcDotCol, curCalcDotCol);
+	setPageRange(curCalcDotPage, curCalcDotPage);
+
+	gpio_put(PIN_DC, OLED_DC_DATA);
+	gpio_put(PIN_CS, 0);
+	{
+		uint8_t blank = 0;
+		spi_write_blocking(spi, &blank, 1);
+	}
+	gpio_put(PIN_CS, 1);
 }
 
 /*--------------------------------------------------------------*/
@@ -354,7 +374,7 @@ void Oled_displayCant(double angle)
 void Oled_displayCenterDot()
 {
 	setColumnRange(DOT_CENTER_COL, DOT_CENTER_COL);
-	setPageRange(0x04, 0x04);
+	setPageRange(DOT_CENTER_PAGE, DOT_CENTER_PAGE);
 
 	gpio_put(PIN_DC, OLED_DC_DATA);
 	uint8_t dot = 0x01;
@@ -365,18 +385,33 @@ void Oled_displayCenterDot()
 	gpio_put(PIN_CS, 1);
 }
 
-int Oled_displayCalcDot(int y)
+int Oled_displayCalcDot(int x, int y)
 {
-	if (y <= 0 || y > 24) {
+	// If current dot is on the center dot byte, redraw the center dot to clear
+	if (curCalcDotCol == DOT_CENTER_COL && curCalcDotPage == DOT_CENTER_PAGE) {
+		Oled_displayCenterDot();
+	} else {
+		clearCalcDot();
+	}
+	
+	uint8_t pixel = 0;
+
+	if (y < -24 || y >= 16) {
 		// Out of range
 		return OLED_OFF_SCREEN;
 	}
 
-	int page = 3 - (y - 1) / 8;
-	uint8_t pixel = 0x80 >> ((y - 1) % 8);
+	curCalcDotPage = (y + 32) / 8;
+	pixel = 0x01 << ((y + 32) % 8);
+	printf("Page:%d Pixel%02X \r\n", curCalcDotPage, pixel);
 
-	setColumnRange(DOT_CENTER_COL, DOT_CENTER_COL);
-	setPageRange(page, page);
+	// If pixel is on the center dot byte, add the center dot too
+	if (curCalcDotCol == DOT_CENTER_COL && curCalcDotPage == DOT_CENTER_PAGE) {
+		pixel |= 0x01;
+	}
+
+	setColumnRange(curCalcDotCol, curCalcDotCol);
+	setPageRange(curCalcDotPage, curCalcDotPage);
 
 	gpio_put(PIN_DC, OLED_DC_DATA);
 	gpio_put(PIN_CS, 0);
@@ -386,20 +421,4 @@ int Oled_displayCalcDot(int y)
 	gpio_put(PIN_CS, 1);
 
 	return OLED_SUCCESS;
-}
-
-void Oled_clearCalcDot()
-{
-	setColumnRange(DOT_CENTER_COL, DOT_CENTER_COL);
-	setPageRange(0x01, 0x03);
-
-	gpio_put(PIN_DC, OLED_DC_DATA);
-	gpio_put(PIN_CS, 0);
-	{
-		uint8_t blank = 0;
-		for (int i = 0; i < 3; i++) {
-			spi_write_blocking(spi, &blank, 1);
-		}
-	}
-	gpio_put(PIN_CS, 1);
 }
