@@ -38,9 +38,8 @@ static double calculateTerminalVelocity(double ballistic_coefficient_metric, dou
 // 	return terminalVelocity;
 // }
 
-static double calculateTime(double v0, double vt, double g, double phi, double x) {
-	double eleAngle = phi * M_PI / 180.0;
-	double t = -(vt * log(1 - (x * g) / (v0 * vt * cos(eleAngle)))) / g;
+static double calculateTime(double v0, double vt, double elev_rad, double x) {
+	double t = -(vt * log(1 - (x * gravity) / (v0 * vt * cos(elev_rad)))) / gravity;
 	return t;
 }
 
@@ -59,56 +58,51 @@ static double calculateTime(double v0, double vt, double g, double phi, double x
 // 	return y;
 // }
 
-static double calculateTargetHeight(double h0, double x, double v0, double vt, double phi, double t)
+static double calculateTargetHeight(double h0, double x, double v0, double vt, double elev_red, double t)
 {
-	const double g = 9.8;  // Gravitational acceleration on Earth
-
-	// Convert launch angle to radians
-	double eleAngle = phi * M_PI / 180.0;
-
 	// Calculate the height of the target
-	double target_height = h0 + (vt / g) * (v0 * sin(eleAngle) + vt) * (1 - exp(-g * t / vt)) - vt * t;
+	double target_height = h0 + (vt / gravity) * (v0 * sin(elev_red) + vt) * (1 - exp(-gravity * t / vt)) - vt * t;
 
 	return target_height;
 }
 
-static double calculateMaxHeight(double v0, double vt, double phi)
+static double calculateMaxHeight(double v0, double vt, double elev_rad)
 {
-	const double g = 9.8;  // Gravitational acceleration on Earth
-
-	// Convert launch angle to radians
-	double phi_rad = phi * M_PI / 180.0;
-
 	// Calculate the time at which y is maximized (when the vertical velocity becomes zero)
-	double t_max_height = (vt * sin(phi_rad)) / g;
+	double t_max_height = (vt * sin(elev_rad)) / gravity;
 
 	// Calculate the maximum height
-	double max_height = (vt / g) * (v0 * sin(phi_rad) + vt) * (1 - exp(-g * t_max_height / vt)) - (vt * t_max_height);
+	double max_height = (vt / gravity) * (v0 * sin(elev_rad) + vt) * (1 - exp(-gravity * t_max_height / vt)) - (vt * t_max_height);
 
 	return max_height;
 }
 
-static double calculateDrop(double distance_m)
+static double calculateDrop(double distance_m, double elev_deg)
 {
 	double h0 = 0.0;  // Initial launch height in meters
 	double v0 = 330;  // Initial velocity in m/s
-	double elev_rad = 0.0;  // Launch angle in degrees
+	double elev_rad = elev_deg * M_PI / 180.0;  // Launch angle in degrees
 	double density = 1.225;
 	double ballistic_coefficient = 0.1;
 	double ballistic_coefficient_metric = ballistic_coefficient*703.1;
 
+	double xDistance_m = distance_m * cos(elev_rad);
+	double yAimHeight = distance_m * sin(elev_rad);
+
 	double vt = calculateTerminalVelocity(ballistic_coefficient_metric, density);
 	// double vt = calculateTerminalVelocity(0.08,0.37,0.01,0.01);
 	// printf("Terminal velocity: %.2f v/m\n", vt);
-	double t = calculateTime(v0,vt,gravity,elev_rad,distance_m);
+	double t = calculateTime(v0, vt, elev_rad, xDistance_m);
 	// printf("Time: %.2f \n", t);
 
-	double target_height = calculateTargetHeight(h0, distance_m, v0, vt, elev_rad,t);
+	double target_height = calculateTargetHeight(h0, xDistance_m, v0, vt, elev_rad, t);
+	double max_height = calculateMaxHeight(v0, vt, elev_rad);	
+	double yDrop = target_height - yAimHeight;
 
-	double max_height = calculateMaxHeight(v0,vt,elev_rad);	
-	printf("Drop: %.3f meters\n", target_height);
+	printf("Drop: %.3f meters\n", yDrop);
 	// printf("Max height of the target: %.2f meters\n", max_height);
-	return target_height;
+
+	return yDrop;
 }
 
 // Converts polar (r, theta) to (x, y) output to the pointers
@@ -131,7 +125,7 @@ void Ballistics_calculatePixelOffset(double distance_m, double elev_deg,
 	const double xEyeToOptic = .2;
 	const double yHeightOverBore = .05;
 
-	double drop_m = calculateDrop(distance_m);
+	double drop_m = calculateDrop(distance_m, elev_deg);
 	
 	double yOffset_m = 0;
 	double zOffset_m = 0;

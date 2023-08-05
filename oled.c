@@ -469,7 +469,6 @@ int Oled_displayCalcDot(int xOffset, int yOffset)
 
 	curCalcDotPage = (yOffset + 32) / 8;
 	pixel = 0x01 << ((yOffset + 32) % 8);
-	printf("Page:%d Pixel%02X \r\n", curCalcDotPage, pixel);
 #if DOT_OR_CROSS == 0
 	// If pixel is on the center dot byte, add the center dot too
 	if (curCalcDotCol == DOT_CENTER_COL && curCalcDotPage == DOT_CENTER_PAGE) {

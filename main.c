@@ -69,10 +69,8 @@ int main()
 		Lidar_buttonPoll();
 
 		if (Lidar_isLocked()) {
-			printf("Distance Locked\r\n");
 			Oled_displayLock();
 		} else {
-			printf("Distance Unlocked\r\n");
 			Oled_clearLock();
 
 			Lidar_distancePoll();
@@ -101,6 +99,6 @@ int main()
 			Oled_clearCalcDotErr();
 		}
 		
-		sleep_ms(50);
+		sleep_ms(100);
 	}
 }
