@@ -75,7 +75,15 @@ int main()
 		Oled_displayDistance(distance_cm);
 		Oled_displayElevation(angles.theta);
 		Oled_displayCant(angles.alpha);
-		int statusOled = Oled_displayCalcDot(xOffset, yOffset); // Use to display warning
+
+		int statusOled = Oled_displayCalcDot(xOffset, yOffset);
+
+		if (statusOled == OLED_OFF_SCREEN) {
+			Oled_displayCalcDotErr();
+		} else if (statusOled == OLED_SUCCESS) {
+			Oled_clearCalcDotErr();
+		}
+		
 		sleep_ms(100);
 	}
 }

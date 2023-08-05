@@ -71,6 +71,7 @@ static uint8_t letterR[3] = {0xFE, 0xB0, 0xEE};
 static uint8_t symbolDeg[3] = {0xE0, 0xA0, 0xE0};
 static uint8_t symbolPlus[3] = {0x10, 0x38, 0x10};
 static uint8_t symbolNeg[3] = {0x10, 0x10, 0x10};
+static uint8_t symbolLock[5] = {0x0E, 0x7E, 0x4A, 0x7E, 0x0E};
 
 /*--------------------------------------------------------------*/
 /*  Static Function Implemetations								*/
@@ -428,4 +429,61 @@ int Oled_displayCalcDot(int x, int y)
 	gpio_put(PIN_CS, 1);
 
 	return OLED_SUCCESS;
+}
+
+void Oled_displayLock()
+{
+	setColumnRange(DIST_DISP_COL - 6, DIST_DISP_COL);
+	setPageRange(DIST_DISP_PAGE, DIST_DISP_PAGE);
+
+	gpio_put(PIN_DC, OLED_DC_DATA);
+	gpio_put(PIN_CS, 0);
+	{
+		display(symbolLock, 5);
+	}
+	gpio_put(PIN_CS, 1);
+}
+
+void Oled_clearLock()
+{
+	setColumnRange(DIST_DISP_COL - 6, DIST_DISP_COL);
+	setPageRange(DIST_DISP_PAGE, DIST_DISP_PAGE);
+
+	gpio_put(PIN_DC, OLED_DC_DATA);
+	gpio_put(PIN_CS, 0);
+	{
+		u_int8_t blank = 0x00;
+		for (int i = 0; i < 5; i++) {
+			display(&blank, 1);
+		}
+	}
+	gpio_put(PIN_CS, 1);
+}
+
+void Oled_displayCalcDotErr()
+{
+	setColumnRange(0x20, 0x20);
+	setPageRange(0x02, 0x02);
+
+	gpio_put(PIN_DC, OLED_DC_DATA);
+	gpio_put(PIN_CS, 0);
+	{
+		u_int8_t error = 0xE4;
+		display(&error, 1);
+	}
+	gpio_put(PIN_CS, 1);
+}
+
+void Oled_clearCalcDotErr()
+{
+	setColumnRange(0x20, 0x20);
+	setPageRange(0x02, 0x02);
+
+	gpio_put(PIN_DC, OLED_DC_DATA);
+	gpio_put(PIN_CS, 0);
+	{
+		u_int8_t blank = 0x00;
+		display(&blank, 1);
+	}
+	gpio_put(PIN_CS, 1);
 }

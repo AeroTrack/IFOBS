@@ -44,4 +44,12 @@ void Oled_displayCenterDot();
 // Returns 0 on success, -1 on failure (off screen)
 int Oled_displayCalcDot(int x, int y);
 
+void Oled_displayLock();
+
+void Oled_clearLock();
+
+void Oled_displayCalcDotErr();
+
+void Oled_clearCalcDotErr();
+
 #endif
