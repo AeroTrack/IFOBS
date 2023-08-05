@@ -22,11 +22,20 @@
 /* Function Prototypes	    									*/
 /*--------------------------------------------------------------*/
 
+// Sets up the LIDAR UART and GPIO pins
 void Lidar_setup();
-void Lidar_poll();
+
+// Toggles the LIDAR lock state
+void Lidar_buttonPoll();
+
+// Polls the LIDAR, the distance is returned from Lidar_getDistanceCm()
+void Lidar_distancePoll();
 
 // Returns the most recent polled distance in cm
 // Returns -1 if LIDAR is disconnected
 short Lidar_getDistanceCm();
+
+// Returns if the LIDAR is locked,
+bool Lidar_isLocked();
 
 #endif

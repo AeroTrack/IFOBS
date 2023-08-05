@@ -1,10 +1,28 @@
+/*-----------------------------------------------------------------------------/
+ /	IFOBS - liar.c															   /
+ /-----------------------------------------------------------------------------/
+ /	Mint Luc
+ /	Bowie Gian
+ /	Created: 2023-06-30
+ /	Modified: 2023-07-28
+ /
+ /	This file contains the functions that will setup and poll the LIDAR.
+ /----------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------*/
+/* Include Files												*/
+/*--------------------------------------------------------------*/
+
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
 #include "pico/binary_info.h"
 #include "hardware/uart.h"
-#include "tusb.h" // this header file will handle the problem of losing initial output
 #include "lidar.h"
+
+/*--------------------------------------------------------------*/
+/* Definitions													*/
+/*--------------------------------------------------------------*/
 
 // which port we want to use uart0 or uart1
 // #define UART_ID0 uart0
@@ -17,10 +35,18 @@
 #define UART1_TX_PIN 8 // pin-11
 #define UART1_RX_PIN 9 // pin-12
 
+#define BUTTON_PIN 11
+
+/*--------------------------------------------------------------*/
+/* Global Variables				 								*/
+/*--------------------------------------------------------------*/
+
 const uint LED_PIN = 25; // also set LED from gpio.h file
 static bool ret;
+static bool isLocked = false;
+static bool prevButtonState = false;
 
-//****************************Structure and Union for handling LiDAR Data***********
+//************************Structure and Union for handling LiDAR Data***********
 
 //Dist_L Dist_H Strength_L Strength_H Temp_L Temp_H Checksum
 typedef struct {
@@ -36,10 +62,23 @@ union unionLidar {
 
 unsigned char lidarCounter = 0;
 union unionLidar Lidar;
-//****************************Structure and Union for handling LiDAR Data***********
 
-//****************************Function to read serial data***********
-int isLidar(uart_inst_t * uart, union unionLidar * lidar)
+//************************Structure and Union for handling LiDAR Data***********
+
+/*--------------------------------------------------------------*/
+/*  Static Function Implemetations								*/
+/*--------------------------------------------------------------*/
+
+// Setup distance lock button
+static void setupGPIO()
+{
+	gpio_init(BUTTON_PIN);
+	gpio_set_dir(BUTTON_PIN, GPIO_IN);
+	gpio_pull_up(BUTTON_PIN);
+}
+
+// Function to read serial data
+static int isLidar(uart_inst_t * uart, union unionLidar * lidar)
 {
 	int loop;
 	int checksum;
@@ -79,10 +118,15 @@ int isLidar(uart_inst_t * uart, union unionLidar * lidar)
 	}
 	return 0;
 }
-//****************************Function to read serial data***********
+
+/*--------------------------------------------------------------*/
+/*  Function Implemetations										*/
+/*--------------------------------------------------------------*/
 
 void Lidar_setup()
 {
+	setupGPIO();
+
 	//******************************************************************
 	// add some binary info
 	// we need to add pico/binary_info.h for this.
@@ -93,9 +137,6 @@ void Lidar_setup()
 	bi_decl(bi_1pin_with_name(UART1_TX_PIN, "pin-5 for uart1 TX"));
 	bi_decl(bi_1pin_with_name(UART1_RX_PIN, "pin-6 for uart1 RX"));
 	//******************************************************************
-
-	// Enable UART so we can print status output
-	stdio_init_all();
 
 	// gpio_init(LED_PIN); // initialize pin-25
 	// gpio_set_dir(LED_PIN, GPIO_OUT); // set pin-25 in output mode
@@ -110,15 +151,6 @@ void Lidar_setup()
 	gpio_set_function(UART1_TX_PIN, GPIO_FUNC_UART);
 	gpio_set_function(UART1_RX_PIN, GPIO_FUNC_UART);
 
-	//************************************************************
-	// cdcd_init();
-	// printf("waiting for usb host");
-	// while (!tud_cdc_connected()) {
-	// 	printf(".");
-	// 	sleep_ms(500);
-	// }
-	// printf("\nusb host detected!\n");
-	//************************************************************
 	// In a default system, printf will also output via the default UART
 	sleep_ms(200);
 	ret = uart_is_enabled(uart1); // pass UART_ID1 or uart1 both are okay
@@ -128,7 +160,20 @@ void Lidar_setup()
 	printf("Ready to read data\n");
 }
 
-void Lidar_poll()
+void Lidar_buttonPoll()
+{
+	bool currButtonState = !gpio_get(BUTTON_PIN);
+	if (currButtonState == prevButtonState) {
+		return;
+	} else if (currButtonState) {
+		isLocked = !isLocked;
+		prevButtonState = currButtonState;
+	} else {
+		prevButtonState = currButtonState;
+	}
+}
+
+void Lidar_distancePoll()
 {
 	// gpio_put(LED_PIN, 0);
 	// sleep_ms(200);
@@ -144,4 +189,9 @@ void Lidar_poll()
 short Lidar_getDistanceCm()
 {
 	return Lidar.lidar.Dist;
+}
+
+bool Lidar_isLocked()
+{
+	return isLocked;
 }

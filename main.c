@@ -28,6 +28,13 @@
 #define SERIAL_MONITOR_WAIT 0
 
 /*--------------------------------------------------------------*/
+/* Global Variables				 								*/
+/*--------------------------------------------------------------*/
+
+short distance_cm = 0;
+double distance_m = 0;
+
+/*--------------------------------------------------------------*/
 /* Main Function												*/
 /*--------------------------------------------------------------*/
 
@@ -59,10 +66,20 @@ int main()
 		Accel_poll();
 		angles = Accel_getAngle();
 
-		Lidar_poll();
-		short distance_cm = Lidar_getDistanceCm();
-		// short distance_cm = 17900;
-		double distance_m = (double)distance_cm / 100.0;
+		Lidar_buttonPoll();
+
+		if (Lidar_isLocked()) {
+			printf("Distance Locked\r\n");
+			Oled_displayLock();
+		} else {
+			printf("Distance Unlocked\r\n");
+			Oled_clearLock();
+
+			Lidar_distancePoll();
+			distance_cm = Lidar_getDistanceCm();
+			// short distance_cm = 17900;
+			distance_m = (double)distance_cm / 100.0;
+		}
 
 		int xOffset = 0;
 		int yOffset = 0;
@@ -84,6 +101,6 @@ int main()
 			Oled_clearCalcDotErr();
 		}
 		
-		sleep_ms(100);
+		sleep_ms(50);
 	}
 }
