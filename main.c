@@ -11,6 +11,7 @@
 /*--------------------------------------------------------------*/
 /* Include Files												*/
 /*--------------------------------------------------------------*/
+
 #include <stdio.h>
 #include "pico/stdio.h"
 #include "pico/time.h"
@@ -23,11 +24,13 @@
 /*--------------------------------------------------------------*/
 /* Definitions													*/
 /*--------------------------------------------------------------*/
+
 #define SERIAL_MONITOR_WAIT 0
 
 /*--------------------------------------------------------------*/
 /* Main Function												*/
 /*--------------------------------------------------------------*/
+
 int main()
 {
 	// Initialize serial port
@@ -55,19 +58,22 @@ int main()
 		angles = Accel_getAngle();
 
 		Lidar_poll();
-		short distance_cm = Lidar_getDistanceCm();
+		// short distance_cm = Lidar_getDistanceCm();
+		short distance_cm = 17900;
 		double distance_m = (double)distance_cm / 100.0;
 
-		double yDrop = ballisticsTest(distance_m);
-		int pixelOffset = calculatePixelOffset(distance_m, -yDrop);
+		int xOffset = 0;
+		int yOffset = 0;
+		Ballistics_calculatePixelOffset(distance_m, angles.theta,
+				angles.alpha, &xOffset, &yOffset);
 
-		printf("%d %d\r\n", distance_cm, pixelOffset);
+		printf("%d %d %d\r\n", distance_cm, xOffset, yOffset);
 		Oled_displayDistance(distance_cm);
-		Oled_displayElevation(-angles.theta);
-		Oled_displayCant(-angles.alpha);
+		Oled_displayElevation(angles.theta);
+		Oled_displayCant(angles.alpha);
 		Oled_displayCenterDot();
 		Oled_clearCalcDot();
-		int statusOled = Oled_displayCalcDot(pixelOffset); // Use to display warning
+		int statusOled = Oled_displayCalcDot(-yOffset); // Use to display warning
 		sleep_ms(100);
 	}
 }
