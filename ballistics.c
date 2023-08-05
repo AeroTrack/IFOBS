@@ -99,15 +99,15 @@ static double calculateDrop(double distance_m)
 
 	double vt = calculateTerminalVelocity(ballistic_coefficient_metric, density);
 	// double vt = calculateTerminalVelocity(0.08,0.37,0.01,0.01);
-	printf("Terminal velocity: %.2f v/m\n", vt);
+	// printf("Terminal velocity: %.2f v/m\n", vt);
 	double t = calculateTime(v0,vt,gravity,elev_rad,distance_m);
-	printf("Time: %.2f \n", t);
+	// printf("Time: %.2f \n", t);
 
 	double target_height = calculateTargetHeight(h0, distance_m, v0, vt, elev_rad,t);
 
 	double max_height = calculateMaxHeight(v0,vt,elev_rad);	
-	printf("Height of the target: %.2f meters\n", target_height);
-	printf("Max height of the target: %.2f meters\n", max_height);
+	printf("Drop: %.3f meters\n", target_height);
+	// printf("Max height of the target: %.2f meters\n", max_height);
 	return target_height;
 }
 
