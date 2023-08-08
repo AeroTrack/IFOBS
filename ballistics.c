@@ -77,14 +77,17 @@ static double calculateMaxHeight(double v0, double vt, double elev_rad)
 	return max_height;
 }
 
+//  25m   0mm
+//  50m  50mm
+// 100m 250mm
 static double calculateDrop(double distance_m, double elev_deg)
 {
 	double h0 = 0.0;  // Initial launch height in meters
-	double v0 = 330;  // Initial velocity in m/s
+	double v0 = 430;  // Initial velocity in m/s
 	double elev_rad = elev_deg * M_PI / 180.0;  // Launch angle in degrees
 	double density = 1.225;
-	double ballistic_coefficient = 0.1;
-	double ballistic_coefficient_metric = ballistic_coefficient*703.1;
+	double ballistic_coefficient = 0.143;
+	double ballistic_coefficient_metric = ballistic_coefficient * 703.1;
 
 	double xDistance_m = distance_m * cos(elev_rad);
 	double yAimHeight = distance_m * sin(elev_rad);
@@ -122,8 +125,8 @@ void Ballistics_calculatePixelOffset(double distance_m, double elev_deg,
 		double cant_deg, int *xOffset, int *yOffset)
 {
 	const double pixelWidth = 0.000254;
-	const double xEyeToOptic = .2;
-	const double yHeightOverBore = .05;
+	const double xEyeToOptic = .05;
+	const double yHeightOverBore = .6;
 
 	double drop_m = calculateDrop(distance_m, elev_deg);
 	
