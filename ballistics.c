@@ -142,4 +142,9 @@ void Ballistics_calculatePixelOffset(double distance_m, double elev_deg,
 	*xOffset = (int)round(zScreen / pixelWidth);
 
 	//printf("%lf %lf %lf %d\r\n", xTotal, yTotal, yScreen, yPixelOffset);
+	
+	double yAngle = atan2(yOffset_m, distance_m);
+	double zAngle = atan2(zOffset_m, distance_m);
+
+	printf("X Offset: %7.3lf Y Offset: %7.3lf\r\n", zAngle, yAngle);
 }
