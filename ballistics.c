@@ -126,7 +126,7 @@ void Ballistics_calculatePixelOffset(double distance_m, double elev_deg,
 {
 	const double pixelWidth = 0.000254;
 	const double xEyeToOptic = .05;
-	const double yHeightOverBore = .6;
+	const double yHeightOverBore = .06;
 
 	double drop_m = calculateDrop(distance_m, elev_deg);
 	
