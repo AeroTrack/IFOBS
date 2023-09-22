@@ -316,7 +316,7 @@ void Oled_displayElevation(double angle)
 	digit[1] = angleInt % 100 / 10;
 	digit[2] = angleInt % 1000 / 100;
 
-	setColumnRange(0x50, 0x7F);
+	setColumnRange(0x4c, 0x7F);
 	setPageRange(0x02, 0x02);
 
 	gpio_put(PIN_DC, OLED_DC_DATA);

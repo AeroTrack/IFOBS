@@ -179,7 +179,7 @@ void Lidar_distancePoll()
 	// sleep_ms(200);
 	// gpio_put(LED_PIN, 1);
 	if (isLidar(UART_ID1,&Lidar)) {
-		printf("Dist:%u \n", Lidar.lidar.Dist);
+		printf("Dist: %ucm \n", Lidar.lidar.Dist);
 	} else {
 		printf("LIDAR disconnected\r\n");
 		Lidar.lidar.Dist = LIDAR_DC;
