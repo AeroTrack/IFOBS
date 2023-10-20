@@ -35,7 +35,8 @@
 #define UART1_TX_PIN 8 // pin-11
 #define UART1_RX_PIN 9 // pin-12
 
-#define BUTTON_PIN 11
+#define PIN_BUTTON 11
+#define PIN_5V_REG 16
 
 /*--------------------------------------------------------------*/
 /* Global Variables				 								*/
@@ -69,12 +70,16 @@ union unionLidar Lidar;
 /*  Static Function Implemetations								*/
 /*--------------------------------------------------------------*/
 
-// Setup distance lock button
+// Setup distance lock button and 5V step up
 static void setupGPIO()
 {
-	gpio_init(BUTTON_PIN);
-	gpio_set_dir(BUTTON_PIN, GPIO_IN);
-	gpio_pull_up(BUTTON_PIN);
+	gpio_init(PIN_BUTTON);
+	gpio_set_dir(PIN_BUTTON, GPIO_IN);
+	gpio_pull_up(PIN_BUTTON);
+
+	gpio_init(PIN_5V_REG);
+	gpio_set_dir(PIN_5V_REG, GPIO_OUT);
+	gpio_put(PIN_5V_REG, 1);
 }
 
 // Function to read serial data
@@ -162,7 +167,7 @@ void Lidar_setup()
 
 void Lidar_buttonPoll()
 {
-	bool currButtonState = !gpio_get(BUTTON_PIN);
+	bool currButtonState = !gpio_get(PIN_BUTTON);
 	if (currButtonState == prevButtonState) {
 		return;
 	} else if (currButtonState) {
