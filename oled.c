@@ -41,9 +41,9 @@
 #define OLED_DC_DATA 1 // data
 
 #define DOT_CENTER_COL 0x3C
-#define DOT_CENTER_PAGE 0x04
+#define DOT_CENTER_PAGE 0x05
 #define DIST_DISP_COL (DOT_CENTER_COL - 0x08)
-#define DIST_DISP_PAGE 0x06
+#define DIST_DISP_PAGE 0x07
 
 /*--------------------------------------------------------------*/
 /* Global Variables				 								*/
@@ -210,8 +210,8 @@ void Oled_setup()
 	gpio_put(PIN_CS, 0);
 	{
 		// Remap (Flip Horizontally)
-		data = 0xA1;
-		spi_write_blocking(spi, &data, 1);
+		// data = 0xA1;
+		// spi_write_blocking(spi, &data, 1);
 
 		// Set Horizonal Addr Mode
 		data = 0x20;
@@ -317,7 +317,7 @@ void Oled_displayElevation(double angle)
 	digit[2] = angleInt % 1000 / 100;
 
 	setColumnRange(0x4c, 0x7F);
-	setPageRange(0x02, 0x02);
+	setPageRange(0x03, 0x03);
 
 	gpio_put(PIN_DC, OLED_DC_DATA);
 	gpio_put(PIN_CS, 0);
@@ -358,7 +358,7 @@ void Oled_displayCant(double angle)
 	digit[2] = angleInt % 1000 / 100;
 
 	setColumnRange(0x36, 0x7F);
-	setPageRange(0x00, 0x00);
+	setPageRange(0x01, 0x01);
 
 	gpio_put(PIN_DC, OLED_DC_DATA);
 	gpio_put(PIN_CS, 0);
@@ -448,7 +448,7 @@ int Oled_displayCalcDot(int xOffset, int yOffset)
 	if (xOffset < -16 || xOffset >= 16) {
 		// Out of range
 		curCalcDotCol = DOT_CENTER_COL;
-		curCalcDotPage == DOT_CENTER_PAGE;
+		curCalcDotPage = DOT_CENTER_PAGE;
 #if DOT_OR_CROSS == 1
 		Oled_displayCenter();
 #endif
@@ -458,7 +458,7 @@ int Oled_displayCalcDot(int xOffset, int yOffset)
 	if (yOffset < -24 || yOffset >= 16) {
 		// Out of range
 		curCalcDotCol = DOT_CENTER_COL;
-		curCalcDotPage == DOT_CENTER_PAGE;
+		curCalcDotPage = DOT_CENTER_PAGE;
 #if DOT_OR_CROSS == 1
 		Oled_displayCenter();
 #endif
@@ -467,8 +467,8 @@ int Oled_displayCalcDot(int xOffset, int yOffset)
 
 	curCalcDotCol = DOT_CENTER_COL + xOffset;
 
-	curCalcDotPage = (yOffset + 32) / 8;
-	pixel = 0x01 << ((yOffset + 32) % 8);
+	curCalcDotPage = (yOffset + DOT_CENTER_PAGE * 8) / 8;
+	pixel = 0x01 << ((yOffset + DOT_CENTER_PAGE * 8) % 8);
 #if DOT_OR_CROSS == 0
 	// If pixel is on the center dot byte, add the center dot too
 	if (curCalcDotCol == DOT_CENTER_COL && curCalcDotPage == DOT_CENTER_PAGE) {
