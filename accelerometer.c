@@ -1,9 +1,29 @@
+/*---------------------------------------------------------------------------- /
+/	IFOBS - accelerometer.c													   /
+/ ---------------------------------------------------------------------------- /
+/	Mint Luc
+/	Bowie Gian
+/	Created: 2023-06-30
+/	Modified: 2023-07-28
+/
+/	This file contains the functions that will drive the accelerometer.
+/	The SPI setup is modified from the accelerometer example.
+/ ----------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------*/
+/* Include Files												*/
+/*--------------------------------------------------------------*/
+
 #include <stdio.h>
 #include <math.h>
 #include "pico/stdio.h"
 #include "pico/stdlib.h"
 #include "hardware/spi.h"
 #include "accelerometer.h"
+
+/*--------------------------------------------------------------*/
+/* Global Variables				 								*/
+/*--------------------------------------------------------------*/
 
 // Registers
 static const uint8_t REG_DEVID = 0x00;
@@ -14,6 +34,10 @@ static const uint8_t REG_DATAX0 = 0x32;
 static const uint8_t DEVID = 0xE5;
 static const float SENSITIVITY_2G = 1.0 / 256;  // (g/LSB)
 static const float EARTH_GRAVITY = 9.80665;     // Earth's gravity in [m/s^2]
+
+/*--------------------------------------------------------------*/
+/*  Static Function Implemetations								*/
+/*--------------------------------------------------------------*/
 
 /*******************************************************************************
  * Function Declarations
@@ -114,6 +138,10 @@ const uint miso_pin = 12;
 spi_inst_t *spi = spi1;
 
 Angle angles;
+
+/*--------------------------------------------------------------*/
+/*  Function Implemetations										*/
+/*--------------------------------------------------------------*/
 
 Angle Accel_getAngle()
 {

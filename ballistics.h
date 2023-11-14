@@ -1,14 +1,14 @@
-/*-----------------------------------------------------------------------------/
- /	IFOBS - ballistics.h													   /
- /-----------------------------------------------------------------------------/
- /	Mint Luc
- /	Bowie Gian
- /	Created: 2023-06-30
- /	Modified: 2023-07-28
- /
- /	This file contains the function declarations for the ballistics
- /	calculations.
- /----------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------- /
+/	IFOBS - ballistics.h													   /
+/ ---------------------------------------------------------------------------- /
+/	Mint Luc
+/	Bowie Gian
+/	Created: 2023-06-30
+/	Modified: 2023-07-28
+/
+/	This file contains the function declarations for the ballistics
+/	calculations.
+/ ----------------------------------------------------------------------------*/
 #ifndef BALLISTICS_H
 #define BALLISTICS_H
 

@@ -26,6 +26,7 @@
   "files.associations": {
     "stdlib.h": "c",
     "oled.h": "c",
-    "accelerometer.h": "c"
+    "accelerometer.h": "c",
+    "stdio.h": "c"
   }
 }

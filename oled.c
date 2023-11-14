@@ -1,13 +1,13 @@
-/*-----------------------------------------------------------------------------/
- /	IFOBS - oled.c															   /
- /-----------------------------------------------------------------------------/
- /	Bowie Gian
- /	Created: 2023-06-30
- /	Modified: 2023-07-28
- /
- /	This file contains the functions that will drive the OLED screen.
- /	The SPI setup is modified from the accelerometer example.
- /----------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------- /
+/	IFOBS - oled.c															   /
+/ ---------------------------------------------------------------------------- /
+/	Bowie Gian
+/	Created: 2023-06-30
+/	Modified: 2023-07-28
+/
+/	This file contains the functions that will drive the OLED screen.
+/	The SPI setup is modified from the accelerometer example.
+/ ----------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------*/
 /* Include Files												*/
