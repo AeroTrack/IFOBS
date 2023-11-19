@@ -38,14 +38,18 @@
 #define PIN_BUTTON 11
 #define PIN_5V_REG 16
 
+// The Lidar will sometimes not respond to a poll
+// This is the amount of polls that can be missed before returning disconnected
+#define MAX_POLLS_MISSED 1
+
 /*--------------------------------------------------------------*/
 /* Global Variables				 								*/
 /*--------------------------------------------------------------*/
 
-const uint LED_PIN = 25; // also set LED from gpio.h file
 static bool ret;
 static bool isLocked = false;
 static bool prevButtonState = false;
+static int numPollsMissed = 0;
 
 //************************Structure and Union for handling LiDAR Data***********
 
@@ -180,15 +184,21 @@ void Lidar_buttonPoll()
 
 void Lidar_distancePoll()
 {
-	// gpio_put(LED_PIN, 0);
-	// sleep_ms(200);
-	// gpio_put(LED_PIN, 1);
 	if (isLidar(UART_ID1,&Lidar)) {
 		printf("Dist: %ucm \n", Lidar.lidar.Dist);
-	} else {
-		printf("LIDAR disconnected\r\n");
-		Lidar.lidar.Dist = LIDAR_DC;
+		numPollsMissed = 0;
+		return;
 	}
+
+	numPollsMissed++;
+
+	if (numPollsMissed <= MAX_POLLS_MISSED) {
+		printf("LIDAR missed %d poll\n", numPollsMissed);
+		return;
+	}
+
+	printf("LIDAR disconnected\r\n");
+	Lidar.lidar.Dist = LIDAR_DC;
 }
 
 short Lidar_getDistanceCm()
