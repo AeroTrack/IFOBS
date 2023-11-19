@@ -4,7 +4,7 @@
 /	Mint Luc
 /	Bowie Gian
 /	Created: 2023-06-30
-/	Modified: 2023-07-28
+/	Modified: 2023-11-19
 /
 /	This file contains the functions that will drive the accelerometer.
 /	The SPI setup is modified from the accelerometer example.
@@ -38,6 +38,8 @@
 
 #define DEVID 0xE5
 
+#define AVERAGING_SIZE 5
+
 /*--------------------------------------------------------------*/
 /* Global Variables				 								*/
 /*--------------------------------------------------------------*/
@@ -51,6 +53,14 @@ static spi_inst_t *spi = spi1;
 
 // Angle output
 static Angle angles;
+
+static double thetaBuff[AVERAGING_SIZE] = {0};
+static int thetaIndex = 0;
+static bool isThetaInit = false;
+
+static double alphaBuff[AVERAGING_SIZE] = {0};
+static int alphaIndex = 0;
+static bool isAlphaInit = false;
 
 /*--------------------------------------------------------------*/
 /*  Static Function Implemetations								*/
@@ -101,6 +111,47 @@ static int reg_read(spi_inst_t *spi, const uint cs, const uint8_t reg,
 	return num_bytes_read;
 }
 
+// Inputs the next value and returns the new average
+static double movingAverage(double value, double buffer[], int *pIndex, bool *pIsInit) {
+	if (!*pIsInit) {
+		printf("Not init\n");
+		*pIsInit = true;
+
+		for (int i = 0; i < AVERAGING_SIZE; i++) {
+			buffer[i] = value;
+		}
+		return value;
+	}
+
+	if (*pIndex < AVERAGING_SIZE - 1) {
+		*pIndex += 1;
+	} else {
+		*pIndex = 0;
+	}
+
+	buffer[*pIndex] = value;
+
+	double sum = 0.0;
+
+	printf("[ ");
+	for (int i = 0; i < AVERAGING_SIZE; i++) {
+		sum += buffer[i];
+		printf("%lf ", buffer[i]);
+	}
+
+	double average = sum / (double)AVERAGING_SIZE;
+	printf("] Avg: %lf\n", average);
+	return average;
+}
+
+static double movAvgTheta(double value) {
+	return movingAverage(value, thetaBuff, &thetaIndex, &isThetaInit);
+}
+
+static double movAvgAlpha(double value) {
+	return movingAverage(value, alphaBuff, &alphaIndex, &isAlphaInit);
+}
+
 static Angle cal_Angle(double x, double y, double z) {
 	double sum_r, r, theta, alpha;
 	Angle result_angle;
@@ -108,9 +159,11 @@ static Angle cal_Angle(double x, double y, double z) {
 	sum_r =  x*x + y*y + z*z;
 	result_angle.r = sqrt(sum_r);
 
-	result_angle.theta = atan2(y, sqrt(x * x + z * z)) * 180/M_PI;
+	theta = atan2(y, sqrt(x * x + z * z)) * 180/M_PI;
+	result_angle.theta = movAvgTheta(theta);
 
-	result_angle.alpha = atan2(x, -z) * 180/M_PI;
+	alpha = atan2(x, -z) * 180/M_PI;
+	result_angle.alpha = movAvgAlpha(alpha);
 
 	return result_angle; 
 }
