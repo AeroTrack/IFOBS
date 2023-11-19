@@ -4,7 +4,7 @@
 /	Mint Luc
 /	Bowie Gian
 /	Created: 2023-06-30
-/	Modified: 2023-07-28
+/	Modified: 2023-11-19
 /
 /	This file contains the functions that calculates ballistic trajectory.
 / ----------------------------------------------------------------------------*/
