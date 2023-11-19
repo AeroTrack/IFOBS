@@ -152,6 +152,8 @@ static double movAvgAlpha(double value) {
 	return movingAverage(value, alphaBuff, &alphaIndex, &isAlphaInit);
 }
 
+// Limitation: Averaging doesn't work when optic is upside down
+// due to fluctuations near 180 and -180
 static Angle cal_Angle(double x, double y, double z) {
 	double sum_r, r, theta, alpha;
 	Angle result_angle;
