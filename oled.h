@@ -23,6 +23,9 @@
 // Sets up and clears the OLED
 void Oled_setup();
 
+// Polls the brightness buttons
+void Oled_brightnessPoll();
+
 // Turns off all pixels
 void Oled_clear();
 

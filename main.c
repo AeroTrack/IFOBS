@@ -66,6 +66,7 @@ int main()
 		Accel_poll();
 		angles = Accel_getAngle();
 
+		Oled_brightnessPoll();
 		Lidar_buttonPoll();
 
 		if (Lidar_isLocked()) {

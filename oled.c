@@ -29,12 +29,17 @@
 // 0 = Dot, 1 = Cross
 #define DOT_OR_CROSS 1
 
+#define NUM_BRIGHTNESS 6
+
 // Pins
 #define PIN_CS		5 // SPI CS
 #define PIN_SCK		2 // SPI CLK
 #define PIN_MOSI	3 // SPI MOSI
 #define PIN_DC		1 // Data/Command pin (Functions need to change)
 #define PIN_RST		4 // LOW = reset, keep HIGH
+
+#define BUTTON_UP	6
+#define BUTTON_DOWN	7
 
 // Values for PIN_DC
 #define OLED_DC_COMD 0 // command
@@ -51,6 +56,14 @@
 
 uint8_t curCalcDotCol = DOT_CENTER_COL;
 uint8_t curCalcDotPage = 0x03;
+
+bool prevButtonUp = false;
+bool prevButtonDown = false;
+
+static int brightnessIndex = 5;
+const uint8_t brightnessSettings[NUM_BRIGHTNESS] = {
+	0x20, 0x50, 0x80, 0xB0, 0xD0, 0xFF
+};
 
 #if DOT_OR_CROSS == 1
 int prevXOffset = 0;
@@ -121,6 +134,50 @@ static void setupGPIO()
 	gpio_init(PIN_RST);
 	gpio_set_dir(PIN_RST, GPIO_OUT);
 	gpio_put(PIN_RST, 1);
+
+	gpio_init(BUTTON_UP);
+	gpio_set_dir(BUTTON_UP, GPIO_IN);
+	gpio_pull_up(BUTTON_UP);
+
+	gpio_init(BUTTON_DOWN);
+	gpio_set_dir(BUTTON_DOWN, GPIO_IN);
+	gpio_pull_up(BUTTON_DOWN);
+}
+
+static void setBrightness(uint8_t brightness) {
+	uint8_t data; // Buffer to store output
+
+	gpio_put(PIN_DC, OLED_DC_COMD);
+	gpio_put(PIN_CS, 0);
+	{
+		data = 0x81;
+		spi_write_blocking(spi, &data, 1);
+		data = brightness;
+		spi_write_blocking(spi, &data, 1);
+	}
+	gpio_put(PIN_CS, 1);
+}
+
+static void brightnessUp() {
+	if (brightnessIndex >= NUM_BRIGHTNESS - 1) {
+		return;
+	}
+
+	brightnessIndex++;
+	setBrightness(brightnessSettings[brightnessIndex]);
+
+	printf("Brightness up %d\n", brightnessIndex);
+}
+
+static void brightnessDown() {
+	if (brightnessIndex <= 0) {
+		return;
+	}
+
+	brightnessIndex--;
+	setBrightness(brightnessSettings[brightnessIndex]);
+
+	printf("Brightness down %d\n", brightnessIndex);
 }
 
 static void setColumnRange(uint8_t start, uint8_t end)
@@ -222,19 +279,33 @@ void Oled_setup()
 	gpio_put(PIN_CS, 1);
 
 	Oled_clear();
+	setBrightness(brightnessSettings[brightnessIndex]);
 
 	gpio_put(PIN_DC, OLED_DC_COMD);
 	gpio_put(PIN_CS, 0);
 	{
-		// Max Brightness
-		data = 0x81;
-		spi_write_blocking(spi, &data, 1);
-		data = 0xFF;
-		spi_write_blocking(spi, &data, 1);
-
 		// Turn on display
 		data = 0xAF;
 		spi_write_blocking(spi, &data, 1);
+	}
+}
+
+void Oled_brightnessPoll() {
+	bool currButtonUp = !gpio_get(BUTTON_UP);
+	bool currButtonDown = !gpio_get(BUTTON_DOWN);
+
+	if (currButtonUp != prevButtonUp) {
+		if (currButtonUp) {
+			brightnessUp();
+		}
+		prevButtonUp = currButtonUp;
+	}
+
+	if (currButtonDown != prevButtonDown) {
+		if (currButtonDown) {
+			brightnessDown();
+		}
+		prevButtonDown = currButtonDown;
 	}
 }
 
