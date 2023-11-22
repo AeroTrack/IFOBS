@@ -25,6 +25,8 @@
 /* Definitions													*/
 /*--------------------------------------------------------------*/
 
+#define DEBUG 0
+
 // Pins
 #define CS_PIN 13
 #define SCK_PIN 14
@@ -114,7 +116,6 @@ static int reg_read(spi_inst_t *spi, const uint cs, const uint8_t reg,
 // Inputs the next value and returns the new average
 static double movingAverage(double value, double buffer[], int *pIndex, bool *pIsInit) {
 	if (!*pIsInit) {
-		printf("Not init\n");
 		*pIsInit = true;
 
 		for (int i = 0; i < AVERAGING_SIZE; i++) {
@@ -133,14 +134,20 @@ static double movingAverage(double value, double buffer[], int *pIndex, bool *pI
 
 	double sum = 0.0;
 
+#if DEBUG == 1
 	printf("[ ");
+#endif
 	for (int i = 0; i < AVERAGING_SIZE; i++) {
 		sum += buffer[i];
+#if DEBUG == 1
 		printf("%lf ", buffer[i]);
+#endif
 	}
 
 	double average = sum / (double)AVERAGING_SIZE;
+#if DEBUG == 1
 	printf("] Avg: %lf\n", average);
+#endif
 	return average;
 }
 
