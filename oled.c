@@ -55,25 +55,25 @@
 /* Global Variables				 								*/
 /*--------------------------------------------------------------*/
 
-uint8_t curCalcDotCol = DOT_CENTER_COL;
-uint8_t curCalcDotPage = 0x03;
+static uint8_t curCalcDotCol = DOT_CENTER_COL;
+static uint8_t curCalcDotPage = 0x03;
 
-bool prevButtonUp = false;
-bool prevButtonDown = false;
+static bool prevButtonUp = false;
+static bool prevButtonDown = false;
 
 static int brightnessIndex = 7;
-const uint8_t brightnessSettings[NUM_BRIGHTNESS] = {
+static const uint8_t brightnessSettings[NUM_BRIGHTNESS] = {
 	0x00, 0x22, 0x44, 0x66, 0x88, 0xAA, 0xCC, 0xFF
 };
 
 // Positive: display and decrement each poll
 //  0: clear display and decrement to -1
 // -1: do nothing
-int brightnessDisplayCount = -1;
+static int brightnessDisplayCount = -1;
 
 #if DOT_OR_CROSS == 1
-int prevXOffset = 0;
-int prevYOffset = 0;
+static int prevXOffset = 0;
+static int prevYOffset = 0;
 #endif
 
 static spi_inst_t *spi;
