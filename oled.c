@@ -30,6 +30,7 @@
 #define DOT_OR_CROSS 1
 
 #define NUM_BRIGHTNESS 8
+#define BRIGHTNESS_DISPLAY_LENGTH 5
 
 // Pins
 #define PIN_CS		5 // SPI CS
@@ -64,6 +65,11 @@ static int brightnessIndex = 7;
 const uint8_t brightnessSettings[NUM_BRIGHTNESS] = {
 	0x00, 0x22, 0x44, 0x66, 0x88, 0xAA, 0xCC, 0xFF
 };
+
+// Positive: display and decrement each poll
+//  0: clear display and decrement to -1
+// -1: do nothing
+int brightnessDisplayCount = -1;
 
 #if DOT_OR_CROSS == 1
 int prevXOffset = 0;
@@ -144,42 +150,6 @@ static void setupGPIO()
 	gpio_pull_up(BUTTON_DOWN);
 }
 
-static void setBrightness(uint8_t brightness) {
-	uint8_t data; // Buffer to store output
-
-	gpio_put(PIN_DC, OLED_DC_COMD);
-	gpio_put(PIN_CS, 0);
-	{
-		data = 0x81;
-		spi_write_blocking(spi, &data, 1);
-		data = brightness;
-		spi_write_blocking(spi, &data, 1);
-	}
-	gpio_put(PIN_CS, 1);
-}
-
-static void brightnessUp() {
-	if (brightnessIndex >= NUM_BRIGHTNESS - 1) {
-		return;
-	}
-
-	brightnessIndex++;
-	setBrightness(brightnessSettings[brightnessIndex]);
-
-	printf("Brightness up %d\n", brightnessIndex);
-}
-
-static void brightnessDown() {
-	if (brightnessIndex <= 0) {
-		return;
-	}
-
-	brightnessIndex--;
-	setBrightness(brightnessSettings[brightnessIndex]);
-
-	printf("Brightness down %d\n", brightnessIndex);
-}
-
 static void setColumnRange(uint8_t start, uint8_t end)
 {
 	uint8_t data;
@@ -252,6 +222,76 @@ static void clearCalcDot()
 	gpio_put(PIN_CS, 1);
 }
 
+// Draws the brightnessIndex on screen
+static void displayBrightnessSetting()
+{
+	setColumnRange(DIST_DISP_COL - 0x10, 0x7F);
+	setPageRange(0x03, 0x03);
+
+	gpio_put(PIN_DC, OLED_DC_DATA);
+	gpio_put(PIN_CS, 0);
+	{
+		display(number[brightnessIndex], 3);
+	}
+	gpio_put(PIN_CS, 1);
+}
+
+// Clears the brightnessIndex
+static void clearBrightnessSetting()
+{
+	setColumnRange(DIST_DISP_COL - 0x10, 0x7F);
+	setPageRange(0x03, 0x03);
+
+	gpio_put(PIN_DC, OLED_DC_DATA);
+	gpio_put(PIN_CS, 0);
+	{
+		u_int8_t blank = 0x00;
+		for (int i = 0; i < 3; i++) {
+			spi_write_blocking(spi, &blank, 1);
+		}
+	}
+	gpio_put(PIN_CS, 1);
+}
+
+static void setBrightness(uint8_t brightness) {
+	uint8_t data; // Buffer to store output
+
+	gpio_put(PIN_DC, OLED_DC_COMD);
+	gpio_put(PIN_CS, 0);
+	{
+		data = 0x81;
+		spi_write_blocking(spi, &data, 1);
+		data = brightness;
+		spi_write_blocking(spi, &data, 1);
+	}
+	gpio_put(PIN_CS, 1);
+
+	displayBrightnessSetting();
+	brightnessDisplayCount = BRIGHTNESS_DISPLAY_LENGTH;
+}
+
+static void brightnessUp() {
+	if (brightnessIndex >= NUM_BRIGHTNESS - 1) {
+		return;
+	}
+
+	brightnessIndex++;
+	setBrightness(brightnessSettings[brightnessIndex]);
+
+	printf("Brightness up %d\n", brightnessIndex);
+}
+
+static void brightnessDown() {
+	if (brightnessIndex <= 0) {
+		return;
+	}
+
+	brightnessIndex--;
+	setBrightness(brightnessSettings[brightnessIndex]);
+
+	printf("Brightness down %d\n", brightnessIndex);
+}
+
 /*--------------------------------------------------------------*/
 /*  Function Implemetations										*/
 /*--------------------------------------------------------------*/
@@ -279,11 +319,16 @@ void Oled_setup()
 	gpio_put(PIN_CS, 1);
 
 	Oled_clear();
-	setBrightness(brightnessSettings[brightnessIndex]);
 
 	gpio_put(PIN_DC, OLED_DC_COMD);
 	gpio_put(PIN_CS, 0);
 	{
+		// Set brightness without displaying index
+		data = 0x81;
+		spi_write_blocking(spi, &data, 1);
+		data = brightnessSettings[brightnessIndex];
+		spi_write_blocking(spi, &data, 1);
+		
 		// Turn on display
 		data = 0xAF;
 		spi_write_blocking(spi, &data, 1);
@@ -306,6 +351,13 @@ void Oled_brightnessPoll() {
 			brightnessDown();
 		}
 		prevButtonDown = currButtonDown;
+	}
+
+	if (brightnessDisplayCount > 0) {
+		brightnessDisplayCount--;
+	} else if (brightnessDisplayCount == 0) {
+		clearBrightnessSetting();
+		brightnessDisplayCount = -1;
 	}
 }
 
