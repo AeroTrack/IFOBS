@@ -31,6 +31,7 @@
 
 #define NUM_BRIGHTNESS 8
 #define BRIGHTNESS_DISPLAY_LENGTH 5
+#define DISABLE_HOLD_LENGTH 10
 
 // Pins
 #define PIN_CS		5 // SPI CS
@@ -70,6 +71,12 @@ static const uint8_t brightnessSettings[NUM_BRIGHTNESS] = {
 //  0: clear display and decrement to -1
 // -1: do nothing
 static int brightnessDisplayCount = -1;
+
+// Positive: buttons held, decrement each poll
+//  0: toggle disableStats, decrement to -1
+// -1: do nothing
+static int bothButtonHoldCount = 0;
+static bool disableStats = false;
 
 #if DOT_OR_CROSS == 1
 static int prevXOffset = 0;
@@ -222,7 +229,7 @@ static void clearCalcDot()
 	gpio_put(PIN_CS, 1);
 }
 
-// Draws the brightnessIndex on screen
+// Draws the brightnessIndex + 1 on screen (offset the 0)
 static void displayBrightnessSetting()
 {
 	setColumnRange(DIST_DISP_COL - 0x10, 0x7F);
@@ -231,7 +238,7 @@ static void displayBrightnessSetting()
 	gpio_put(PIN_DC, OLED_DC_DATA);
 	gpio_put(PIN_CS, 0);
 	{
-		display(number[brightnessIndex], 3);
+		display(number[brightnessIndex + 1], 3);
 	}
 	gpio_put(PIN_CS, 1);
 }
@@ -359,6 +366,23 @@ void Oled_brightnessPoll() {
 		clearBrightnessSetting();
 		brightnessDisplayCount = -1;
 	}
+
+	if (!currButtonUp || !currButtonDown) {
+		bothButtonHoldCount = -1;
+		return;
+	}
+
+	if (bothButtonHoldCount == -1) {
+		bothButtonHoldCount = DISABLE_HOLD_LENGTH;
+		return;
+	}
+
+	if (bothButtonHoldCount == 0) {
+		Oled_clear();
+		disableStats = !disableStats;
+	}
+
+	bothButtonHoldCount--;
 }
 
 void Oled_clear()
@@ -379,6 +403,9 @@ void Oled_clear()
 
 void Oled_displayDistance(int distance_cm)
 {
+	if (disableStats)
+		return;
+
 	setColumnRange(DIST_DISP_COL, 0x7F);
 	setPageRange(DIST_DISP_PAGE, DIST_DISP_PAGE);
 
@@ -425,6 +452,9 @@ void Oled_displayDistance(int distance_cm)
 
 void Oled_displayElevation(double angle)
 {
+	if (disableStats)
+		return;
+
 	bool negative = false;
 
 	if (angle < 0) {
@@ -466,6 +496,9 @@ void Oled_displayElevation(double angle)
 
 void Oled_displayCant(double angle)
 {
+	if (disableStats)
+		return;
+
 	bool negative = false;
 
 	if (angle < 0) {
