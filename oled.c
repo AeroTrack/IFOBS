@@ -29,7 +29,7 @@
 // 0 = Dot, 1 = Cross
 #define DOT_OR_CROSS 1
 
-#define NUM_BRIGHTNESS 6
+#define NUM_BRIGHTNESS 8
 
 // Pins
 #define PIN_CS		5 // SPI CS
@@ -60,9 +60,9 @@ uint8_t curCalcDotPage = 0x03;
 bool prevButtonUp = false;
 bool prevButtonDown = false;
 
-static int brightnessIndex = 5;
+static int brightnessIndex = 7;
 const uint8_t brightnessSettings[NUM_BRIGHTNESS] = {
-	0x20, 0x50, 0x80, 0xB0, 0xD0, 0xFF
+	0x00, 0x22, 0x44, 0x66, 0x88, 0xAA, 0xCC, 0xFF
 };
 
 #if DOT_OR_CROSS == 1
