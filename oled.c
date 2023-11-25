@@ -775,6 +775,9 @@ void Oled_clearCalcDotErr()
 
 void Oled_displayBattery(int fill)
 {
+	if (disableStats)
+	return;
+
 	setColumnRange(0x50, 0x7F);
 	setPageRange(0x01, 0x01);
 
