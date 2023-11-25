@@ -17,6 +17,7 @@
 #include "pico/time.h"
 #include "tusb.h"
 #include "accelerometer.h"
+#include "battery.h"
 #include "ballistics.h"
 #include "lidar.h"
 #include "oled.h"
@@ -57,11 +58,14 @@ int main()
 	Oled_setup();
 	Accel_setup();
 	Lidar_setup();
+	Battery_setup();
 
 	Oled_displayCenter();
 
 	while (true) {
 		Angle angles;
+
+		Oled_displayBattery(Battery_get());
 
 		Accel_poll();
 		angles = Accel_getAngle();

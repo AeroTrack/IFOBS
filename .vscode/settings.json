@@ -24,9 +24,14 @@
   "cmake.generator": "Ninja",
   "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
   "files.associations": {
+    "*.css": "tailwindcss",
     "stdlib.h": "c",
     "oled.h": "c",
     "accelerometer.h": "c",
-    "stdio.h": "c"
+    "stdio.h": "c",
+    "spi.h": "c",
+    "adc.h": "c",
+    "battery.h": "c",
+    "gpio.h": "c"
   }
 }

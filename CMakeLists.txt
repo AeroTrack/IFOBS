@@ -16,6 +16,7 @@ add_executable(ifobs
 	main.c
 	accelerometer.c
 	ballistics.c
+	battery.c
 	lidar.c
 	oled.c
 )
@@ -24,6 +25,7 @@ add_executable(ifobs
 target_link_libraries(ifobs
 	pico_stdlib
 	hardware_spi
+	hardware_adc
 )
 
 # create map/bin/hex/uf2 file in addition to ELF.

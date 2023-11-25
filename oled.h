@@ -55,4 +55,7 @@ void Oled_displayCalcDotErr();
 
 void Oled_clearCalcDotErr();
 
+// Displays a battery icon with an amount of blocks filled (0-4)
+void Oled_displayBattery(int fill);
+
 #endif
