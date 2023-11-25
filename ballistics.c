@@ -19,6 +19,11 @@
 /		   /
 /		  /  x elevation
 /		 v
+/
+/ drag function is approximated as a quadratic polynomial based off testing data see:
+/ https://www.desmos.com/calculator/uct58sogvw
+/
+/
 / ----------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------*/
@@ -32,9 +37,9 @@
 /* Global Variables				 								*/
 /*--------------------------------------------------------------*/
 
-const double gravity = 9.8;
-const double v_muzzle = 390;  // Initial velocity in m/s
-const double elev_bias_rad = 0.012; // angle between muzzle and red dot
+const double gravity = -9.8;
+const double v_muzzle = 280;  // Initial velocity in m/s
+const double HeightOverBore = .06;
 // v_muzzle and elev_bias_rad will need to be tweaked during testing.
 
 /*--------------------------------------------------------------*/
@@ -71,53 +76,34 @@ static double calculateTime(double v0, double target_dist) {
 	// output:
 	//			t  - expected time of flight
 
-	double t = target_dist/(v0); // Calculate time of flight
+	double t = target_dist/v0; // Calculate time of flight
 	return t;
 }
 
 
 
-static double calculateTargetDisplacement(double v0, double g, double t)
+static double calculateTargetDisplacement(double a, double v, double d, double t)
 {
-	// description: Calculate the height of the target (e
-	// input: 
-	//			v0 - inital velocity,
-	//			t - time of bullet flight
-	//			g - gravity
-	// output:
-	//			target height - expected bullet drop / expected bullet displacement 
-	//
-
-
-	double target_height = (v0 * t) - (0.5 * g * pow(t, 2));
+	double target_height = 0.5 * a * pow(t, 2) + (v * t) + d ;
 
 	return target_height;
 }
 
 
-//  25m   0mm
-//  50m  50mm
-// 100m 250mm
+
 static struct Vector calculateDrop(double distance_m, double elev_rad, double cant_rad)
 {
+	double t_flight = calculateTime(v_muzzle, distance_m); 
 
-	struct Vector v0 = rotate_vector(cant_rad, elev_rad + elev_bias_rad, v_muzzle);
-	struct Vector aimHeight = rotate_vector(cant_rad, elev_rad, distance_m);
-	struct Vector offset; // calculation results is placed in offset vector
-
-
-
-	double t = calculateTime(v0.y, aimHeight.y); // when range finder is unlocked distance is range finder reading projected onto y-axis
-	//double t = calculateTime(v0.y, distance_m); // when range finder is locked distance is just range finder reading
-
-	offset.y = 0; // theres only a LR bullet displacement and Up Down bullet displacement
-
-	offset.z = calculateTargetDisplacement(v0.z, gravity, t) - aimHeight.z;
-
-	offset.x = calculateTargetDisplacement(v0.x, 0, t) - aimHeight.x;
+	double gravity_d = calculateTargetDisplacement(gravity, 0, 0, t_flight);
+	double bias_d = calculateTargetDisplacement(5, 0.75, -HeightOverBore, t_flight); // 0.75 and 5 are values based off matlab curve fitting to test data
+	
+	struct Vector offset;
+	offset.z = gravity_d + bias_d * cos(cant_rad);
+	offset.x = bias_d * sin(cant_rad);
 	
 
-	//printf("Drop: %.3f meters, right: %.3f meters\n", offset.z, offset.x);
+	printf("%f, %f, ",offset.x, offset.z);
 
 	return offset;
 }
@@ -138,8 +124,8 @@ static struct Vector proj2screen(double cant_rad, double elevation_rad, double x
 	z = z / cos(elevation_rad);
 
 	// rotate target displacement base on screen
-	result.x = x * cos(cant_rad) + z * sin(cant_rad);
-	result.z = -x * sin(cant_rad) + z * cos(cant_rad);
+	result.x = x * cos(-cant_rad) + z * sin(-cant_rad);
+	result.z = -x * sin(-cant_rad) + z * cos(-cant_rad);
 	result.y = 0; // y is not used in the screen vector
 	return result;
 
@@ -152,7 +138,7 @@ void Ballistics_calculatePixelOffset(double distance_m, double elev_deg, double 
 {
 	const double pixelWidth = 0.000254;
 	const double EyeToOptic = .05; 
-	const double HeightOverBore = .06;
+
 
 	double elev_rad = elev_deg * M_PI / 180.0;  // Launch angle in degrees
 	double cant_rad = cant_deg * M_PI / 180.0;
@@ -160,14 +146,13 @@ void Ballistics_calculatePixelOffset(double distance_m, double elev_deg, double 
 	struct Vector offset = calculateDrop(distance_m, elev_rad, cant_rad);
 
 	double yTotal = distance_m + EyeToOptic;
-	offset.z = offset.z - HeightOverBore;
 
 	// convert drop distance to offset distance at eye to optic length
 	offset.z = offset.z / yTotal * EyeToOptic;
 	offset.x = offset.x / yTotal * EyeToOptic ;
 	
 	// project target drop (and LR displacement) onto the screen plane
-	struct Vector screen = proj2screen(cant_rad, elev_rad, offset.x,offset.z);
+	struct Vector screen = proj2screen(cant_rad, elev_rad, offset.x, offset.z);
 
 	// convert m to pixels	
 
@@ -180,13 +165,18 @@ void Ballistics_calculatePixelOffset(double distance_m, double elev_deg, double 
 
 
 
-// // for testing 
+// for testing 
 // int main() {
-// 	double distance_m = 100;
+// 	double distance_m = 22.86;
 // 	double elev_deg = 0; // up is positive
 // 	double cant_deg = 0; // right is positive
 // 	int xOffset = 0;
 // 	int zOffset = 0;
+
+// 	// USE THE FOLLOWING METER VALUES FOR TESTING
+// 	// 25 yd        22.86 m 
+// 	// 50 yd        45.72 m
+// 	// 100 yd       91.44 m
 
 // 	// test parameters: distance = 100m, 
 // 	// key: d = ~0.5m drop due to gravity or 1px, os = off screen 
@@ -198,22 +188,27 @@ void Ballistics_calculatePixelOffset(double distance_m, double elev_deg, double 
 // 	//              90     45     | -d         100           -os                -os
 // 	//              45     45     | -d          0            -d                  os
 
-
+	
 // 	// Ballistics_calculatePixelOffset(distance_m, elev_deg, cant_deg, &xOffset, &zOffset);
 // 	// printf("cant Deg: %0.1f right: %d px, up: %d px \n", cant_deg, xOffset, zOffset);
+	
 
+// 	printf("cant Deg: right: up: \n");
+	
+// 	for (int i = -90; i<91; i+=1){
+// 		cant_deg = (double)(i);
+// 		//cant_deg = -90;
+// 		printf("%.1f, ",cant_deg);
 
-// 	/*
-// 	for (int i = 0; i<90; i+=1){
-// 		cant_deg = (double)i;
 // 		Ballistics_calculatePixelOffset(distance_m, elev_deg, cant_deg, &xOffset, &zOffset);
 // 		//printf("cant Deg: %f Drop: %d px, right: %d px \n", cant_deg, zOffset, xOffset);
-// 		printf("%.1f, %d, %d\n", cant_deg, xOffset, zOffset);
+// 		printf("%d, %d\n", xOffset, zOffset);
+	
 
 // 	} 
-// 	*/
-
-
-//     return 0; 
-
-// }  
+	
+	
+	
+// 	return 0; 
+	
+// }
