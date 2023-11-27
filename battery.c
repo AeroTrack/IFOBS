@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include "hardware/adc.h"
 #include "battery.h"
+#include "utils.h"
 
 /*--------------------------------------------------------------*/
 /* Definitions													*/
@@ -25,6 +26,17 @@
 
 #define BATT_LOW  2.8
 #define BATT_HIGH 4.2
+
+/*--------------------------------------------------------------*/
+/* Global Variables				 								*/
+/*--------------------------------------------------------------*/
+
+static double voltsBuff[AVERAGING_SIZE] = {0};
+static int voltsIndex = 0;
+static bool isVoltsInit = false;
+
+static const double threshold = .25;
+static int prevReturn = 0;
 
 /*--------------------------------------------------------------*/
 /*  Function Implemetations										*/
@@ -46,24 +58,28 @@ void Battery_setup()
 int Battery_get()
 {
 	uint16_t result = adc_read();
-	float resultF = (result * 3.3f / (1 << 12)) * 3;
+	double volts = (result * 3.3 / (1 << 12)) * 3;
+	double averagedVolts = movingAverage(volts, voltsBuff, &voltsIndex, &isVoltsInit);
 
-	float scale = 5.0f / (BATT_HIGH - BATT_LOW);
-	float scaledResult = (resultF - BATT_LOW) * scale;
+	double scale = 4.0 / (BATT_HIGH - BATT_LOW);
+	double scaledResult = (averagedVolts - BATT_LOW) * scale;
+
+	if (scaledResult > (double)prevReturn + 1.0 + threshold) {
+		prevReturn++;
+	} else if (scaledResult < (double)prevReturn - threshold) {
+		prevReturn--;
+	}
+
+	if (prevReturn > 4) {
+		prevReturn = 4;
+	} else if (prevReturn < 0) {
+		prevReturn = 0;
+	}
 
 	// printf("Value: %x\n", result);
-	// printf("Voltage: %f V\n", resultF);
+	printf("Voltage: %f V\n", averagedVolts);
 	// printf("Batt: %f\n", scaledResult);
+	// printf("Return: %d\n", prevReturn);
 
-	if (scaledResult > 4.0f) {
-		return 4;
-	} else if (scaledResult > 3.0f) {
-		return 3;
-	} else if (scaledResult > 2.0f) {
-		return 2;
-	} else if (scaledResult > 1.0f) {
-		return 1;
-	} else {
-		return 0;
-	}
+	return prevReturn;
 }
