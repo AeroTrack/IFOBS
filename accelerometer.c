@@ -20,6 +20,7 @@
 #include "pico/stdlib.h"
 #include "hardware/spi.h"
 #include "accelerometer.h"
+#include "utils.h"
 
 /*--------------------------------------------------------------*/
 /* Definitions													*/
@@ -39,8 +40,6 @@
 #define REG_DATAX0 0x32
 
 #define DEVID 0xE5
-
-#define AVERAGING_SIZE 5
 
 /*--------------------------------------------------------------*/
 /* Global Variables				 								*/
@@ -113,49 +112,13 @@ static int reg_read(spi_inst_t *spi, const uint cs, const uint8_t reg,
 	return num_bytes_read;
 }
 
-// Inputs the next value and returns the new average
-static double movingAverage(double value, double buffer[], int *pIndex, bool *pIsInit) {
-	if (!*pIsInit) {
-		*pIsInit = true;
-
-		for (int i = 0; i < AVERAGING_SIZE; i++) {
-			buffer[i] = value;
-		}
-		return value;
-	}
-
-	if (*pIndex < AVERAGING_SIZE - 1) {
-		*pIndex += 1;
-	} else {
-		*pIndex = 0;
-	}
-
-	buffer[*pIndex] = value;
-
-	double sum = 0.0;
-
-#if DEBUG == 1
-	printf("[ ");
-#endif
-	for (int i = 0; i < AVERAGING_SIZE; i++) {
-		sum += buffer[i];
-#if DEBUG == 1
-		printf("%lf ", buffer[i]);
-#endif
-	}
-
-	double average = sum / (double)AVERAGING_SIZE;
-#if DEBUG == 1
-	printf("] Avg: %lf\n", average);
-#endif
-	return average;
-}
-
-static double movAvgTheta(double value) {
+static double movAvgTheta(double value)
+{
 	return movingAverage(value, thetaBuff, &thetaIndex, &isThetaInit);
 }
 
-static double movAvgAlpha(double value) {
+static double movAvgAlpha(double value)
+{
 	return movingAverage(value, alphaBuff, &alphaIndex, &isAlphaInit);
 }
 

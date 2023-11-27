@@ -19,6 +19,7 @@ add_executable(ifobs
 	battery.c
 	lidar.c
 	oled.c
+	utils.c
 )
 
 # Add pico_stdlib library which aggregates commonly used features
