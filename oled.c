@@ -47,7 +47,7 @@
 #define OLED_DC_COMD 0 // command
 #define OLED_DC_DATA 1 // data
 
-#define DOT_CENTER_COL 0x3C
+#define DOT_CENTER_COL 0x40
 #define DOT_CENTER_PAGE 0x05
 #define DIST_DISP_COL (DOT_CENTER_COL - 0x08)
 #define DIST_DISP_PAGE 0x07

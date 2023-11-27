@@ -51,9 +51,9 @@ int Battery_get()
 	float scale = 5.0f / (BATT_HIGH - BATT_LOW);
 	float scaledResult = (resultF - BATT_LOW) * scale;
 
-	printf("Value: %x\n", result);
-	printf("Voltage: %f V\n", resultF);
-	printf("Batt: %f\n", scaledResult);
+	// printf("Value: %x\n", result);
+	// printf("Voltage: %f V\n", resultF);
+	// printf("Batt: %f\n", scaledResult);
 
 	if (scaledResult > 4.0f) {
 		return 4;

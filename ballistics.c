@@ -137,7 +137,7 @@ static struct Vector proj2screen(double cant_rad, double elevation_rad, double x
 void Ballistics_calculatePixelOffset(double distance_m, double elev_deg, double cant_deg, int *xOffset, int *zOffset)
 {
 	const double pixelWidth = 0.000254;
-	const double EyeToOptic = .05; 
+	const double eyeToOptic = .2;
 
 
 	double elev_rad = elev_deg * M_PI / 180.0;  // Launch angle in degrees
@@ -145,11 +145,11 @@ void Ballistics_calculatePixelOffset(double distance_m, double elev_deg, double 
 
 	struct Vector offset = calculateDrop(distance_m, elev_rad, cant_rad);
 
-	double yTotal = distance_m + EyeToOptic;
+	double yTotal = distance_m + eyeToOptic;
 
 	// convert drop distance to offset distance at eye to optic length
-	offset.z = offset.z / yTotal * EyeToOptic;
-	offset.x = offset.x / yTotal * EyeToOptic ;
+	offset.z = offset.z / yTotal * eyeToOptic;
+	offset.x = offset.x / yTotal * eyeToOptic ;
 	
 	// project target drop (and LR displacement) onto the screen plane
 	struct Vector screen = proj2screen(cant_rad, elev_rad, offset.x, offset.z);
