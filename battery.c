@@ -64,9 +64,9 @@ int Battery_get()
 	double scale = 4.0 / (BATT_HIGH - BATT_LOW);
 	double scaledResult = (averagedVolts - BATT_LOW) * scale;
 
-	if (scaledResult > (double)prevReturn + 1.0 + threshold) {
+	if (scaledResult > (double)prevReturn + .75 + threshold) {
 		prevReturn++;
-	} else if (scaledResult < (double)prevReturn - threshold) {
+	} else if (scaledResult < (double)prevReturn - .25 - threshold) {
 		prevReturn--;
 	}
 
