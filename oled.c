@@ -413,9 +413,6 @@ void Oled_clear()
 
 void Oled_displayDistance(int distance_cm)
 {
-	if (disableStats)
-		return;
-
 	setColumnRange(DIST_DISP_COL, 0x7F);
 	setPageRange(DIST_DISP_PAGE, DIST_DISP_PAGE);
 
